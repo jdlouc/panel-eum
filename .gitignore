@@ -1,0 +1,11 @@
+# Datos reales de alumnas — nunca deben subirse a un repo público
+*.csv
+CONTEXTO_PANEL_EUM.md
+
+# Config local del agente
+.claude/
+
+# Artefactos del sistema / archivos de trabajo locales
+.DS_Store
+*.png
+panel_eum.html
