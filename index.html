@@ -554,9 +554,9 @@
       <div class="panel-body">
         <p style="color:var(--ink-soft); margin-top:0;">Para la carga inicial (o para dar de alta a varias alumnas de golpe). Acepta el mismo formato de columnas que <span class="mono">roster_base_19jun.csv</span>: <span class="mono">Matricula, NombreCompleto, Programa, Email, UltimoAcceso, Estatus, CalifFinal</span>. Las que ya existan por correo se omiten (no se duplican).</p>
         <div class="drop-zone" id="eum-roster-drop-zone" onclick="document.getElementById('eum-roster-file-input').click()">
-          <div>📎 Arrastra aquí el archivo .csv o haz clic para elegirlo</div>
+          <div>📎 Arrastra aquí el archivo .csv o .xlsx, o haz clic para elegirlo</div>
           <div class="filename" id="eum-roster-file-name"></div>
-          <input type="file" id="eum-roster-file-input" accept=".csv,text/csv">
+          <input type="file" id="eum-roster-file-input" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
         </div>
         <span class="paste-toggle" onclick="EUM.togglePanel('eum-panel-import-roster-paste')">o pega el contenido del CSV manualmente</span>
         <div class="panel" id="eum-panel-import-roster-paste" style="margin-top:8px; border:none;">
@@ -630,9 +630,9 @@
           <input type="date" id="eum-new-date" style="padding:7px 10px; border:1.5px solid var(--line); border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:13px;">
         </div>
         <div class="drop-zone" id="eum-drop-zone" onclick="document.getElementById('eum-file-input').click()">
-          <div>📎 Arrastra aquí el archivo .csv o haz clic para elegirlo</div>
+          <div>📎 Arrastra aquí el archivo .csv o .xlsx, o haz clic para elegirlo</div>
           <div class="filename" id="eum-file-name"></div>
-          <input type="file" id="eum-file-input" accept=".csv,text/csv">
+          <input type="file" id="eum-file-input" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
         </div>
         <span class="paste-toggle" onclick="EUM.togglePanel('eum-panel-paste')">o pega el contenido del CSV manualmente</span>
         <div class="panel" id="eum-panel-paste" style="margin-top:8px; border:none;">
@@ -670,6 +670,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 (function(){
 
@@ -1327,15 +1328,52 @@ async function addManualStudent(){
   render();
 }
 
+// ---------------- lectura de archivos: acepta .csv y .xlsx/.xls ----------------
+function isExcelFile(file){ return /\.(xlsx|xls)$/i.test(file.name); }
+function readSpreadsheetFile(file, onText){
+  const reader = new FileReader();
+  if (isExcelFile(file)){
+    reader.onload = e => {
+      try {
+        // cellDates:false a propósito: leemos los seriales crudos y los convertimos
+        // nosotros mismos con parse_date_code (matemática de calendario pura, sin
+        // zona horaria) para evitar el corrimiento de horas que da CellDates/JS Date,
+        // y sobreescribimos cualquier texto ya cacheado (.w) para que sea consistente
+        // sin importar el formato de fecha que traiga el Excel de origen.
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: false, cellNF: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const pad = n => String(n).padStart(2,'0');
+        Object.keys(ws).forEach(addr=>{
+          if (addr[0]==='!') return;
+          const cell = ws[addr];
+          if (cell && cell.t==='n' && cell.z && XLSX.SSF.is_date(cell.z)){
+            const dc = XLSX.SSF.parse_date_code(cell.v);
+            if (dc){
+              cell.t = 's';
+              cell.v = `${dc.y}-${pad(dc.m)}-${pad(dc.d)}T${pad(dc.H)}:${pad(dc.M)}:${pad(Math.round(dc.S))}`;
+              delete cell.w;
+            }
+          }
+        });
+        const csv = XLSX.utils.sheet_to_csv(ws);
+        onText(csv);
+      } catch(err){
+        console.error('no se pudo leer el archivo Excel', err);
+        onText('');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.onload = e => onText(e.target.result);
+    reader.readAsText(file, 'utf-8');
+  }
+}
+
 let PENDING_ROSTER_FILE_TEXT = null;
 function handleRosterCsvFile(file){
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    PENDING_ROSTER_FILE_TEXT = e.target.result;
-    document.getElementById('eum-roster-file-name').textContent = '📄 ' + file.name;
-  };
-  reader.readAsText(file, 'utf-8');
+  document.getElementById('eum-roster-file-name').textContent = '📄 ' + file.name;
+  readSpreadsheetFile(file, text => { PENDING_ROSTER_FILE_TEXT = text; });
 }
 
 async function importRosterCsv(){
@@ -1378,12 +1416,8 @@ let PENDING_FILE_TEXT = null;
 
 function handleCsvFile(file){
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    PENDING_FILE_TEXT = e.target.result;
-    document.getElementById('eum-file-name').textContent = '📄 ' + file.name;
-  };
-  reader.readAsText(file, 'utf-8');
+  document.getElementById('eum-file-name').textContent = '📄 ' + file.name;
+  readSpreadsheetFile(file, text => { PENDING_FILE_TEXT = text; });
 }
 
 async function ingestSnapshot(){
