@@ -1420,6 +1420,34 @@ function handleCsvFile(file){
   readSpreadsheetFile(file, text => { PENDING_FILE_TEXT = text; });
 }
 
+// El export de Talisis no siempre trae las mismas columnas en el mismo orden
+// (el .xlsx de un corte trajo una columna menos que el .csv de otro) — por eso
+// se ubica cada campo por el NOMBRE de su encabezado, no por posición fija.
+// "Nombre" aparece repetido: la 1a ocurrencia es el Curso, la 2a es el primer
+// nombre de la alumna; si hay una 3a (segundo nombre) se ignora, no se usa.
+function mapTalisisColumns(header){
+  const m = {};
+  (header||[]).forEach((h, i)=>{
+    h = (h||'').trim();
+    if (h==='Nombre'){
+      if (m.curso===undefined) m.curso = i;
+      else if (m.nombre1===undefined) m.nombre1 = i;
+    }
+    else if (h==='Apellido') m.apellido = i;
+    else if (h==='Matriculado en') m.matriculado = i;
+    else if (h==='Primer inicio de sesión en') m.primer_login = i;
+    else if (h==='Último inicio de sesión') m.ultimo_login = i;
+    else if (h==='Porcentaje%') m.porcentaje = i;
+    else if (h==='Calificación') m.calificacion = i;
+    else if (h==='Se unió a') m.se_unio = i;
+    else if (h==='Última visita en') m.ultima_visita = i;
+    else if (h==='Progreso') m.progreso = i;
+    else if (h==='Teléfono de contacto') m.telefono = i;
+    else if (h==='Correo electrónico') m.email = i;
+  });
+  return m;
+}
+
 async function ingestSnapshot(){
   const raw = PENDING_FILE_TEXT || document.getElementById('eum-csv-input').value;
   const dateInput = document.getElementById('eum-new-date').value;
@@ -1428,14 +1456,21 @@ async function ingestSnapshot(){
   if (!dateInput){ reportEl.innerHTML = '<div class="diff-report">Indica la fecha de este corte.</div>'; return; }
 
   const parsed = Papa.parse(raw.trim(), { skipEmptyLines: true });
+  const col = mapTalisisColumns(parsed.data[0]);
+  const requeridas = ['curso','nombre1','apellido','matriculado','primer_login','ultimo_login','progreso','email'];
+  const faltantes = requeridas.filter(k=>col[k]===undefined);
+  if (faltantes.length){
+    reportEl.innerHTML = `<div class="diff-report">No se reconocieron estas columnas del encabezado: ${faltantes.join(', ')}. Revisa que el archivo sea el export de Talisis sin modificar.</div>`;
+    return;
+  }
   const rows = parsed.data.slice(1); // quitar encabezado
 
   const byEmail = {};
   rows.forEach(r=>{
-    if (!r || r.length < 16) return;
-    const email = (r[15]||'').trim().toLowerCase();
+    if (!r || r.length < 2) return;
+    const email = (r[col.email]||'').trim().toLowerCase();
     if (!email) return;
-    if (!byEmail[email]) byEmail[email] = { rows: [], nombre: `${(r[2]||'').trim()} ${(r[4]||'').trim()}`.replace(/\s+/g,' ').trim() };
+    if (!byEmail[email]) byEmail[email] = { rows: [], nombre: `${(r[col.nombre1]||'').trim()} ${(r[col.apellido]||'').trim()}`.replace(/\s+/g,' ').trim() };
     byEmail[email].rows.push(r);
   });
 
@@ -1448,12 +1483,12 @@ async function ingestSnapshot(){
     seenEmails.add(email);
     const info = byEmail[email];
     const cursos = info.rows.map(r=>({
-      curso: r[0],
-      matriculado: r[6]||null,
-      progreso: r[13]!==undefined && r[13]!=='' ? parseFloat(r[13]) : null,
-      calificacion: (r[10] && r[10]!=='-') ? r[10] : null,
-      porcentaje: r[9]!==undefined && r[9]!=='' ? parseFloat(r[9]) : null,
-      ultima_visita: r[12]||null,
+      curso: r[col.curso],
+      matriculado: r[col.matriculado]||null,
+      progreso: r[col.progreso]!==undefined && r[col.progreso]!=='' ? parseFloat(r[col.progreso]) : null,
+      calificacion: (r[col.calificacion] && r[col.calificacion]!=='-') ? r[col.calificacion] : null,
+      porcentaje: r[col.porcentaje]!==undefined && r[col.porcentaje]!=='' ? parseFloat(r[col.porcentaje]) : null,
+      ultima_visita: r[col.ultima_visita]||null,
     }));
     const prevRecord = prevSnap.find(a=>a.email===email);
     const maestro = findMaestro(email);
@@ -1461,10 +1496,10 @@ async function ingestSnapshot(){
       email,
       nombre: info.nombre,
       matricula: maestro && maestro.matricula ? maestro.matricula : (prevRecord ? prevRecord.matricula : null),
-      primer_login: info.rows[0][7]||null,
-      ultimo_login: info.rows[0][8]||null,
-      se_unio: info.rows[0][11]||null,
-      telefono: info.rows[0][14]||null,
+      primer_login: info.rows[0][col.primer_login]||null,
+      ultimo_login: info.rows[0][col.ultimo_login]||null,
+      se_unio: info.rows[0][col.se_unio]||null,
+      telefono: info.rows[0][col.telefono]||null,
       cursos,
       baja: false,
     });
