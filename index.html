@@ -795,7 +795,17 @@ function latestDate(){ return STATE.snapshotDates[STATE.snapshotDates.length-1];
 function latestSnapshot(){ return STATE.snapshots[latestDate()] || []; }
 
 // ---------------- roster maestro helpers ----------------
-function findMaestro(email){ return STATE.rosterMaestro.find(m=>m.email===email); }
+// Una alumna puede haber cambiado de correo: el roster guarda su correo principal (m.email)
+// y los anteriores/alternos en m.correos_alternos. Cualquiera de ellos la identifica.
+function findMaestro(email){
+  email = (email||'').trim().toLowerCase();
+  return STATE.rosterMaestro.find(m => m.email===email || (m.correos_alternos||[]).includes(email));
+}
+// Correo "canónico" (el principal del roster) para unir su historial bajo una sola identidad.
+function canonicalEmail(email){
+  const m = findMaestro(email);
+  return m ? m.email : email;
+}
 function maestroByCareer(programa){ return STATE.rosterMaestro.filter(m=>m.programa===programa); }
 
 function effectivePrograma(alumna){
@@ -1107,8 +1117,15 @@ function renderAdminPendientes(){
           <button class="btn-secondary" onclick="EUM.registrarPendiente('${alumna.email}')">Registrar</button>
           <button class="tag-remove" onclick="EUM.exclude('${alumna.email}')">marcar prueba/staff</button>
         </div>
+        <div class="qi-actions" style="width:100%; margin-top:6px;">
+          <input type="text" list="eum-maestro-list" id="eum-link-${cssSafe(alumna.email)}" placeholder="¿Es un correo nuevo de una alumna ya registrada? Escribe su nombre…" style="flex:1; min-width:220px; padding:7px 10px; border:1.5px solid var(--line); border-radius:7px; font-size:12.5px;">
+          <button class="btn-secondary" onclick="EUM.vincularPendiente('${alumna.email}')">Vincular</button>
+        </div>
       </div>
     `).join('')}
+    <datalist id="eum-maestro-list">
+      ${STATE.rosterMaestro.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(m=>`<option value="${m.nombre} (${m.email})"></option>`).join('')}
+    </datalist>
   `;
 }
 
@@ -1152,7 +1169,10 @@ function renderAdminCareers(){
           <tbody>
             ${list.map(m=>`
               <tr>
-                <td class="name">${m.nombre}<div class="sub">${m.email}</div></td>
+                <td class="name">${m.nombre}<div class="sub">${m.email}</div>
+                  ${(m.correos_alternos||[]).map(c=>`<div class="sub alt-mail">↳ ${c} <button class="tag-remove" title="Quitar este correo" onclick="EUM.quitarCorreoAlterno('${m.email}','${c}')">✕</button></div>`).join('')}
+                  <button class="tag-remove" onclick="EUM.agregarCorreoAlterno('${m.email}')">+ agregar otro correo</button>
+                </td>
                 <td class="mono">${m.matricula||'—'}</td>
                 <td>
                   <select class="estatus-select st-${m.estatus}" onchange="EUM.setEstatusMaestro('${m.email}', this.value)">
@@ -1174,7 +1194,7 @@ function cssSafe(email){ return email.replace(/[^a-z0-9]/gi,'_'); }
 
 // ---------------- modal ----------------
 function openStudent(email){
-  const a = latestSnapshot().find(x=>x.email===email);
+  const a = latestSnapshot().find(x=>canonicalEmail(x.email)===canonicalEmail(email));
   if (!a) return;
   const status = computeStatus(a);
   const badgeClass = status==='activa' ? 'b-activa' : (status==='sin_actividad' ? 'b-riesgo' : 'b-baja');
@@ -1217,7 +1237,7 @@ function openStudent(email){
   } else {
     const courseNames = [...new Set((a.cursos||[]).map(c=>c.curso))];
     const rows = STATE.snapshotDates.map(d=>{
-      const snap = STATE.snapshots[d].find(x=>x.email===email);
+      const snap = STATE.snapshots[d].find(x=>canonicalEmail(x.email)===canonicalEmail(email));
       if (!snap) return `<div class="hist-row"><span class="hd">${d}</span><span style="color:var(--ink-soft);">sin registro</span></div>`;
       const summary = (snap.cursos||[]).map(c=>`${c.curso.slice(0,18)}: ${fmtPct(c.progreso)}`).join(' · ');
       return `<div class="hist-row"><span class="hd">${d}</span><span>${summary}</span></div>`;
@@ -1234,7 +1254,7 @@ function openStudent(email){
       <div class="modal">
         <button class="close-x" onclick="EUM.closeModal()">✕</button>
         <h2 class="disp">${a.nombre}</h2>
-        <div class="modal-meta">${a.email} ${a.matricula?(' · Matrícula '+a.matricula):''}</div>
+        <div class="modal-meta">${a.email} ${a.matricula?(' · Matrícula '+a.matricula):''}${(findMaestro(a.email)&&(findMaestro(a.email).correos_alternos||[]).length)?'<br>Otros correos: '+findMaestro(a.email).correos_alternos.join(', '):''}</div>
         <div style="display:flex; gap:8px; margin-bottom:16px;">
           <span class="badge ${badgeClass}">${badgeLabel}</span>
           <span class="badge" style="background:var(--paper); color:var(--ink-soft);">${programa}</span>
@@ -1294,6 +1314,42 @@ async function excludeFromMaestro(email){
   STATE.overrides.excluidos[email] = true;
   await saveRosterMaestro();
   await saveOverrides();
+  render();
+}
+function correoEnUso(email, exceptoMaestro){
+  const m = findMaestro(email);
+  return m && m!==exceptoMaestro ? m : null;
+}
+async function agregarCorreoAlterno(emailPrincipal){
+  const m = findMaestro(emailPrincipal);
+  if (!m) return;
+  const nuevo = (prompt(`Nuevo correo de ${m.nombre} (el actual se conserva para no perder su historial):`)||'').trim().toLowerCase();
+  if (!nuevo) return;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(nuevo)){ alert('Ese correo no parece válido.'); return; }
+  const otro = correoEnUso(nuevo, m);
+  if (otro){ alert(`Ese correo ya está registrado para ${otro.nombre}.`); return; }
+  m.correos_alternos = m.correos_alternos||[];
+  if (!m.correos_alternos.includes(nuevo) && m.email!==nuevo) m.correos_alternos.push(nuevo);
+  await saveRosterMaestro();
+  render();
+}
+async function quitarCorreoAlterno(emailPrincipal, alterno){
+  const m = findMaestro(emailPrincipal);
+  if (!m) return;
+  if (!confirm(`¿Quitar ${alterno} de ${m.nombre}? Si aparece en un reporte, volverá a salir como alumna pendiente.`)) return;
+  m.correos_alternos = (m.correos_alternos||[]).filter(c=>c!==alterno);
+  await saveRosterMaestro();
+  render();
+}
+async function vincularPendiente(emailPendiente){
+  const input = document.getElementById('eum-link-'+cssSafe(emailPendiente));
+  const val = input ? input.value.trim() : '';
+  const match = val.match(/\(([^()]+)\)\s*$/); // "Nombre (correo)" -> correo
+  const m = match ? findMaestro(match[1].trim().toLowerCase()) : null;
+  if (!m){ alert('Elige a la alumna de la lista que aparece al escribir su nombre.'); return; }
+  m.correos_alternos = m.correos_alternos||[];
+  if (!m.correos_alternos.includes(emailPendiente)) m.correos_alternos.push(emailPendiente);
+  await saveRosterMaestro();
   render();
 }
 async function registrarPendiente(email){
@@ -1468,29 +1524,35 @@ async function ingestSnapshot(){
   const byEmail = {};
   rows.forEach(r=>{
     if (!r || r.length < 2) return;
-    const email = (r[col.email]||'').trim().toLowerCase();
-    if (!email) return;
+    const emailRaw = (r[col.email]||'').trim().toLowerCase();
+    if (!emailRaw) return;
+    const email = canonicalEmail(emailRaw); // si es un correo alterno, se une al principal
     if (!byEmail[email]) byEmail[email] = { rows: [], nombre: `${(r[col.nombre1]||'').trim()} ${(r[col.apellido]||'').trim()}`.replace(/\s+/g,' ').trim() };
     byEmail[email].rows.push(r);
   });
 
   const newSnapshotArr = [];
   const prevSnap = latestSnapshot();
-  const prevEmails = new Set(prevSnap.map(a=>a.email));
+  const prevEmails = new Set(prevSnap.map(a=>canonicalEmail(a.email)));
   const seenEmails = new Set();
 
   Object.keys(byEmail).forEach(email=>{
     seenEmails.add(email);
     const info = byEmail[email];
-    const cursos = info.rows.map(r=>({
+    const cursosPorNombre = {};
+    info.rows.map(r=>({
       curso: r[col.curso],
       matriculado: r[col.matriculado]||null,
       progreso: r[col.progreso]!==undefined && r[col.progreso]!=='' ? parseFloat(r[col.progreso]) : null,
       calificacion: (r[col.calificacion] && r[col.calificacion]!=='-') ? r[col.calificacion] : null,
       porcentaje: r[col.porcentaje]!==undefined && r[col.porcentaje]!=='' ? parseFloat(r[col.porcentaje]) : null,
       ultima_visita: r[col.ultima_visita]||null,
-    }));
-    const prevRecord = prevSnap.find(a=>a.email===email);
+    })).forEach(c=>{
+      const ya = cursosPorNombre[c.curso];
+      if (!ya || (c.progreso||0) > (ya.progreso||0)) cursosPorNombre[c.curso] = c; // si se repite la materia, se queda la más avanzada
+    });
+    const cursos = Object.values(cursosPorNombre);
+    const prevRecord = prevSnap.find(a=>canonicalEmail(a.email)===email);
     const maestro = findMaestro(email);
     newSnapshotArr.push({
       email,
@@ -1507,14 +1569,14 @@ async function ingestSnapshot(){
 
   // alumnas que ya no aparecen -> marcarlas como baja en este nuevo corte, conservando su último dato conocido
   prevSnap.forEach(a=>{
-    if (!seenEmails.has(a.email)){
+    if (!seenEmails.has(canonicalEmail(a.email))){
       newSnapshotArr.push(Object.assign({}, a, { baja: true }));
     }
   });
 
   const altas = [...seenEmails].filter(e=>!prevEmails.has(e));
   const nuevasSinRegistrar = altas.filter(e=>!findMaestro(e));
-  const bajasNuevas = prevSnap.filter(a=>!a.baja && !seenEmails.has(a.email));
+  const bajasNuevas = prevSnap.filter(a=>!a.baja && !seenEmails.has(canonicalEmail(a.email)));
 
   STATE.snapshots[dateInput] = newSnapshotArr;
   if (!STATE.snapshotDates.includes(dateInput)) STATE.snapshotDates.push(dateInput);
@@ -1551,6 +1613,7 @@ window.EUM = {
   exclude, unexclude, openStudent, closeModal, ingestSnapshot, setSort,
   setEstatusMaestro, reasignarCarrera, excludeFromMaestro, registrarPendiente, addManualStudent,
   deleteSnapshot, login, logout, resetPassword, importRosterCsv,
+  agregarCorreoAlterno, quitarCorreoAlterno, vincularPendiente,
 };
 
 document.getElementById('eum-search').addEventListener('input', e=>{ STATE.search = e.target.value; renderRoster(); });
