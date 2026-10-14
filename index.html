@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
@@ -228,7 +229,7 @@
   overflow-y: hidden;
   margin-bottom: 26px;
 }
-#eum-app table.roster { width: 100%; min-width: 780px; border-collapse: collapse; font-size: 13px; }
+#eum-app table.roster { width: 100%; min-width: 880px; border-collapse: collapse; font-size: 13px; }
 #eum-app table.roster thead th {
   text-align: left;
   font-size: 10.5px;
@@ -423,6 +424,17 @@
 #eum-app .estatus-select.st-baja { border-color: var(--baja); color: var(--baja); }
 #eum-app .estatus-select.st-no_pertenece { border-color: var(--risk); color: var(--risk); }
 
+#eum-app table.admin-roster input[type=text], #eum-app table.admin-roster input[type=date] {
+  padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 7px;
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 12.5px; background: var(--paper-raised); width: 100%; min-width: 130px;
+}
+#eum-app table.cal-table { min-width: 700px; }
+#eum-app table.cal-table input[type=text] { min-width: 280px; }
+#eum-app .cal-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+#eum-app .cal-draft { background: var(--brand-soft); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; font-size: 12.5px; }
+#eum-app .cal-draft h3 { font-family:'Fraunces',serif; font-size: 16px; margin: 0 0 8px 0; }
+#eum-app .cal-draft ul { margin: 4px 0 10px 18px; padding: 0; }
+#eum-app .cal-row { display:flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
 #eum-app .queue-section { margin-bottom: 20px; }
 #eum-app .queue-section h3 { font-family:'Fraunces',serif; font-size: 16px; margin: 0 0 10px 0; }
 #eum-app .queue-item {
@@ -536,6 +548,7 @@
 
   <div class="eum-tabs">
     <button class="eum-tab-btn" id="eum-tabbtn-admin" onclick="EUM.switchTab('admin')">Administración</button>
+    <button class="eum-tab-btn" id="eum-tabbtn-cal" onclick="EUM.switchTab('cal')">Calendario</button>
     <button class="eum-tab-btn" id="eum-tabbtn-seg" onclick="EUM.switchTab('seg')">Seguimiento</button>
   </div>
 
@@ -582,6 +595,19 @@
     <div id="eum-admin-careers"></div>
   </div>
 
+  <!-- ============ TAB: CALENDARIO ============ -->
+  <div class="eum-tab-panel" id="eum-tab-cal">
+    <p style="color:var(--ink-soft); font-size:13px; margin-top:0;">Materias programadas por carrera, con su fecha de inicio y de fin. El panel de Seguimiento compara el avance de cada alumna contra este calendario, evaluado a la fecha del último corte cargado. Los nombres deben coincidir con los de Talisis (escribe y elige de la lista).</p>
+    <div class="cal-actions">
+      <button class="btn-primary" onclick="document.getElementById('eum-cal-file').click()">📥 Importar desde Excel (CALENDARIZACIÓN EUM)</button>
+      <input type="file" id="eum-cal-file" accept=".xlsx,.xls" style="display:none">
+      <span style="font-size:12px; color:var(--ink-soft);">Importar propone un borrador que revisas antes de aplicarlo.</span>
+    </div>
+    <div id="eum-cal-draft"></div>
+    <datalist id="eum-materias-list"></datalist>
+    <div id="eum-cal-careers"></div>
+  </div>
+
   <!-- ============ TAB: SEGUIMIENTO ============ -->
   <div class="eum-tab-panel" id="eum-tab-seg">
     <div class="stat-strip" id="eum-stat-strip"></div>
@@ -594,6 +620,14 @@
         <option value="activa">Activas</option>
         <option value="sin_actividad">Sin actividad (riesgo)</option>
         <option value="baja">Bajas</option>
+      </select>
+      <select id="eum-filter-cal">
+        <option value="todas">Calendario: todas</option>
+        <option value="rezago">Rezago</option>
+        <option value="atrasada">Atrasada</option>
+        <option value="ligera">Ligeramente atrasada</option>
+        <option value="al_corriente">Al corriente</option>
+        <option value="sin_calendario">Sin calendario</option>
       </select>
       <button class="chip-btn" id="eum-risk-chip">⚠️ Alumnas en riesgo</button>
       <button class="chip-btn active" id="eum-clear-career" style="display:none;">✕ Quitar filtro de carrera</button>
@@ -609,6 +643,7 @@
             <th data-sort="avg">Prom.</th>
             <th data-sort="calif">Calif. prom.</th>
             <th data-sort="riesgo">Atención</th>
+            <th data-sort="calendario">Calendario</th>
             <th data-sort="estatus">Estatus</th>
             <th data-sort="actividad">Últ. actividad</th>
           </tr>
@@ -742,6 +777,8 @@ let STATE = {
   snapshotDates: [],   // sorted asc
   overrides: { excluidos: {} },
   rosterMaestro: [],   // lista oficial: {matricula,nombre,email,programa,estatus,notas}
+  calendario: {},      // { carrera: [ {materia, inicio:'YYYY-MM-DD', fin:'YYYY-MM-DD'} ] }
+  calFilter: 'todas',
   activeCareer: null,
   search: '',
   statusFilter: 'todas',
@@ -755,6 +792,7 @@ let STATE = {
 const DIAS_INACTIVIDAD_ALERTA = 10;   // sin acceso >= N días -> amarillo
 const DIAS_INACTIVIDAD_CRITICA = 21;  // sin acceso >= N días -> rojo
 const UMBRAL_PROGRESO_BAJO = 30;      // promedio de progreso < N% (y > 0) -> amarillo
+const TOLERANCIA_CALENDARIO = 20;     // puntos de avance por debajo de lo esperado que se consideran 'ligeramente atrasada'
 
 // ---------------- storage helpers ----------------
 async function loadState(){
@@ -775,6 +813,11 @@ async function loadState(){
   } catch(e){ /* none yet */ }
 
   try {
+    const cal = await window.storage.get('calendario', false);
+    if (cal && cal.value) STATE.calendario = JSON.parse(cal.value);
+  } catch(e){ /* sin calendario todavía */ }
+
+  try {
     const rm = await window.storage.get('roster_maestro', false);
     if (rm && rm.value) STATE.rosterMaestro = JSON.parse(rm.value);
     else { STATE.rosterMaestro = ROSTER_SEED.slice(); await saveRosterMaestro(); }
@@ -784,6 +827,11 @@ async function loadState(){
 async function saveOverrides(){
   try { await window.storage.set('overrides', JSON.stringify(STATE.overrides), false); }
   catch(e){ console.error('no se pudo guardar overrides', e); }
+}
+
+async function saveCalendario(){
+  try { await window.storage.set('calendario', JSON.stringify(STATE.calendario), false); }
+  catch(e){ console.error('no se pudo guardar el calendario', e); }
 }
 
 async function saveRosterMaestro(){
@@ -945,8 +993,11 @@ function render(){
   renderDataQuality();
   renderHistorial();
   renderAdminTab();
+  renderCalendario();
   document.getElementById('eum-tabbtn-admin').classList.toggle('active', STATE.currentTab==='admin');
   document.getElementById('eum-tabbtn-seg').classList.toggle('active', STATE.currentTab==='seg');
+  document.getElementById('eum-tabbtn-cal').classList.toggle('active', STATE.currentTab==='cal');
+  document.getElementById('eum-tab-cal').classList.toggle('active', STATE.currentTab==='cal');
   document.getElementById('eum-tab-admin').classList.toggle('active', STATE.currentTab==='admin');
   document.getElementById('eum-tab-seg').classList.toggle('active', STATE.currentTab==='seg');
 }
@@ -1030,6 +1081,13 @@ function renderRoster(){
   if (STATE.riskOnly){
     roster = roster.filter(a => { const r=riskLevel(a); return r==='rojo'||r==='amarillo'; });
   }
+  const calMap = new Map(roster.map(a=>[a.email, calendarStatus(a)]));
+  if (STATE.calFilter !== 'todas'){
+    roster = roster.filter(a => {
+      const st = calMap.get(a.email);
+      return STATE.calFilter==='sin_calendario' ? !st : (st && st.nivel===STATE.calFilter);
+    });
+  }
   if (STATE.search.trim()){
     const q = STATE.search.trim().toLowerCase();
     roster = roster.filter(a => a.nombre.toLowerCase().includes(q) || a.email.toLowerCase().includes(q));
@@ -1042,6 +1100,7 @@ function renderRoster(){
     else if (STATE.sortKey==='avg'){ av=avgProgreso(a)||0; bv=avgProgreso(b)||0; }
     else if (STATE.sortKey==='calif'){ av=avgPorcentaje(a)||0; bv=avgPorcentaje(b)||0; }
     else if (STATE.sortKey==='riesgo'){ av=riskOrder(riskLevel(a)); bv=riskOrder(riskLevel(b)); }
+    else if (STATE.sortKey==='calendario'){ const sa=calMap.get(a.email), sb=calMap.get(b.email); av = sa ? CAL_ORDEN[sa.nivel] : 9; bv = sb ? CAL_ORDEN[sb.nivel] : 9; }
     else if (STATE.sortKey==='estatus'){ av=computeStatus(a); bv=computeStatus(b); }
     else if (STATE.sortKey==='actividad'){ av=lastActivity(a)||''; bv=lastActivity(b)||''; }
     else { av=a.nombre; bv=b.nombre; }
@@ -1074,6 +1133,7 @@ function renderRoster(){
       <td class="mono">${avg===null?'—':Math.round(avg)+'%'}</td>
       <td class="mono">${calif===null?'—':Math.round(calif)+'%'}</td>
       <td><span class="risk-dot ${risk}"></span>${riskLabel(risk)}</td>
+      <td>${(()=>{ const st = calMap.get(a.email); return st ? `<span class="badge ${CAL_BADGE[st.nivel]}" title="${escAttr(calTooltip(st))}">${CAL_LABEL[st.nivel]}</span>` : '<span style="color:var(--ink-soft);">—</span>'; })()}</td>
       <td><span class="badge ${badgeClass}">${badgeLabel}</span></td>
       <td class="mono" style="font-size:11.5px;">${fmtDate(lastActivity(a))}</td>
     </tr>`;
@@ -1120,6 +1180,247 @@ async function deleteSnapshot(date){
   } catch(e){ console.error('no se pudo borrar el corte', e); }
   render();
 }
+
+// ---------------- calendario: materias por carrera y avance programado ----------------
+const MESES_ES = {enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,setiembre:9,octubre:10,noviembre:11,diciembre:12};
+const SHEET_A_CARRERA = { contabilidad:'Contabilidad y Finanzas', software:'Software y Sistemas Computacionales', administracion:'Administración', mercadotecnia:'Mercadotecnia Estratégica' };
+const MATERIA_STOP = new Set(['de','del','la','las','el','los','lo','para','en','y','a','al','un','una']);
+const DIA_MS = 86400000;
+
+function quitarAcentos(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+// Clave para cruzar el nombre del calendario con el de Talisis aunque cambie el orden de las palabras
+// ("Estrategias de autonomía para el aprendizaje" = "Estrategias para la autonomía en el aprendizaje").
+function materiaKey(n){
+  return quitarAcentos(String(n||'')).toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(t=>t && !MATERIA_STOP.has(t)).sort().join(' ');
+}
+function ymd(y,m,d){ return new Date(Date.UTC(y,m-1,d)).toISOString().slice(0,10); }
+function ymdToUTC(str){ const [y,m,d] = String(str).split('-').map(Number); return Date.UTC(y,m-1,d); }
+function escAttr(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Nombres de materia vistos en los cortes cargados (los de Talisis), sin repetir por clave
+function seenCourseNames(){
+  const vistos = new Map();
+  Object.values(STATE.snapshots).forEach(arr=>(arr||[]).forEach(a=>(a.cursos||[]).forEach(c=>{
+    const k = materiaKey(c.curso);
+    if (k && !vistos.has(k)) vistos.set(k, c.curso);
+  })));
+  return [...vistos.values()].sort((x,y)=>x.localeCompare(y));
+}
+function canonicalMateriaName(nombre){
+  const k = materiaKey(nombre);
+  const hit = seenCourseNames().find(n=>materiaKey(n)===k);
+  return hit || nombre;
+}
+
+// Lee las filas (arreglo de arreglos) de UNA pestaña por carrera del Excel "CALENDARIZACIÓN EUM"
+// y devuelve [{materia, inicio, fin}]. Estructura esperada: encabezado de mes ("Junio 2026: 1 materia"),
+// fila(s) "Materia 1 | nombre | Materia 2 | nombre" (o el nombre en la misma fila del mes) y
+// filas de semana ("04 al 10 de mayo"). Inicio = 1ª semana de la materia, fin = su última semana.
+function parseCalendarioRows(rows){
+  const out = [];
+  const avisos = [];
+  let hy = null, hm = null, cur = null, ultimoYM = null;
+  const txt = v => (v==null ? '' : String(v)).replace(/\s+/g,' ').trim();
+  const limpia = v => txt(v).replace(/[.\s]+$/,'');
+  rows.forEach(r=>{
+    const a = txt(r[0]), b = txt(r[1]), d = txt(r[3]), e = txt(r[4]);
+    if (!a && !b && !d && !e){ cur = null; return; }
+    let m = a.match(/^([A-Za-zÁÉÍÓÚÜáéíóúüñÑ]+)\s+(\d{4})\s*:/);
+    if (m && MESES_ES[quitarAcentos(m[1]).toLowerCase()]){
+      hm = MESES_ES[quitarAcentos(m[1]).toLowerCase()]; hy = +m[2]; cur = [];
+      // los meses van en orden cronológico: si el año retrocede es un error de captura del Excel (p. ej. "Enero 2026" tras "Diciembre 2026")
+      if (ultimoYM!=null && hy*12+hm < ultimoYM){
+        const ya = Math.floor((ultimoYM-1)/12), mA = ((ultimoYM-1)%12)+1;
+        const corregido = ya + (hm < mA ? 1 : 0);
+        avisos.push(`"${a.split(':')[0]}" venía después de un mes posterior; se tomó como ${corregido}`);
+        hy = corregido;
+      }
+      ultimoYM = hy*12+hm;
+      if (b){ const x = { materia: limpia(b) }; cur.push(x); out.push(x); }
+      return;
+    }
+    if (/^materia\s*\d/i.test(a)){
+      if (cur===null) cur = [];
+      if (b){ const x = { materia: limpia(b) }; cur.push(x); out.push(x); }
+      if (/^materia\s*\d/i.test(d) && e){ const x = { materia: limpia(e) }; cur.push(x); out.push(x); }
+      return;
+    }
+    m = a.match(/^(\d{1,2})\s+al\s+(\d{1,2})\s+de\s+([A-Za-zÁÉÍÓÚáéíóúñ]+)/i);
+    if (m && cur && cur.length){
+      if (/descanso|vacaciones/i.test(b)) return;
+      const d1 = +m[1], d2 = +m[2], mes = MESES_ES[quitarAcentos(m[3]).toLowerCase()];
+      if (!mes || hy==null) return;
+      let y = hy;
+      if (mes - hm > 6) y -= 1; else if (hm - mes > 6) y += 1;
+      const fin = ymd(y, mes, d2);
+      const ini = d1 > d2 ? ymd(y, mes-1, d1) : ymd(y, mes, d1);
+      cur.forEach(x=>{ if (!x.inicio) x.inicio = ini; x.fin = fin; });
+      // la fila "Módulo 5 y cierre Estrategias" alarga el fin de Estrategias, no de la materia del mes
+      if (/estrategias/i.test(b) && cur.some(x=>!/estrategias/i.test(x.materia))){
+        const est = out.filter(x=>/estrategias/i.test(x.materia) && x.fin).pop();
+        if (est) est.fin = fin;
+      }
+    }
+  });
+  const res = out.filter(x=>x.materia && x.inicio && x.fin);
+  res.avisos = avisos;
+  return res;
+}
+
+// Estado de UNA materia para una alumna, a la fecha de corte. real = progreso (0-100) o null si no aparece en su reporte.
+function evalMateria(entry, real, corteStr){
+  const corte = ymdToUTC(corteStr), ini = ymdToUTC(entry.inicio), fin = ymdToUTC(entry.fin);
+  let esperado, estado;
+  if (corte > fin){
+    esperado = 100;
+    estado = real==null ? 'sin_matricular' : (real>=100 ? 'concluida' : 'rezagada');
+  } else if (corte >= ini){
+    esperado = 100 * (((corte-ini)/DIA_MS)+1) / (((fin-ini)/DIA_MS)+1);
+    if (real==null) estado = 'sin_matricular_vigente';
+    else if (real>=100) estado = 'adelantada';
+    else if (real>=esperado) estado = 'al_corriente';
+    else if (real>=esperado-TOLERANCIA_CALENDARIO) estado = 'ligera';
+    else estado = 'atrasada';
+  } else {
+    esperado = 0;
+    estado = (real!=null && real>0) ? 'adelantada' : 'por_iniciar';
+  }
+  return { materia: entry.materia, inicio: entry.inicio, fin: entry.fin, estado, esperado, real };
+}
+
+// Resumen de la alumna contra el calendario de su carrera, a la fecha del último corte.
+// nivel: 'rezago' (materia cerrada sin concluir o sin matricular) > 'atrasada' (materia vigente por debajo de lo esperado)
+//        > 'ligera' (dentro de la tolerancia) > 'al_corriente' (incluye concluidas y adelantadas). null = sin calendario.
+// 'sin_matricular_vigente' no cambia el nivel (puede estar por matricularse) pero aparece en el detalle.
+function calendarStatus(alumna){
+  const prog = effectivePrograma(alumna);
+  const cal = prog ? (STATE.calendario[prog]||[]).filter(x=>x.materia && x.inicio && x.fin) : [];
+  const corte = latestDate();
+  if (!cal.length || !corte) return null;
+  const porClave = {};
+  (alumna.cursos||[]).forEach(c=>{
+    const k = materiaKey(c.curso), p = c.progreso==null ? 0 : c.progreso;
+    if (porClave[k]==null || p > porClave[k]) porClave[k] = p;
+  });
+  const detalle = cal.map(x=>{ const k = materiaKey(x.materia); return evalMateria(x, k in porClave ? porClave[k] : null, corte); });
+  const est = detalle.map(d=>d.estado);
+  let nivel = 'al_corriente';
+  if (est.some(e=>e==='rezagada' || e==='sin_matricular')) nivel = 'rezago';
+  else if (est.includes('atrasada')) nivel = 'atrasada';
+  else if (est.includes('ligera')) nivel = 'ligera';
+  return { nivel, detalle };
+}
+const CAL_LABEL = { rezago:'Rezago', atrasada:'Atrasada', ligera:'Lig. atrasada', al_corriente:'Al corriente' };
+const CAL_BADGE = { rezago:'b-rojo', atrasada:'b-rojo', ligera:'b-amarillo', al_corriente:'b-verde' };
+const CAL_ORDEN = { rezago:0, atrasada:1, ligera:2, al_corriente:3 };
+const ESTADO_TXT = { concluida:'concluida', rezagada:'cerró sin concluir', sin_matricular:'no aparece en su reporte (ya cerró)', sin_matricular_vigente:'no aparece en su reporte (vigente)', adelantada:'adelantada', al_corriente:'al corriente', ligera:'ligeramente atrasada', atrasada:'atrasada', por_iniciar:'por iniciar' };
+function calTooltip(st){
+  return st.detalle.filter(d=>d.estado!=='por_iniciar').map(d=>`${d.materia}: ${ESTADO_TXT[d.estado]} (${d.real==null?'—':Math.round(d.real)+'%'} de ${Math.round(d.esperado)}% esperado)`).join('\n');
+}
+
+// ---- pestaña Calendario ----
+function renderCalendario(){
+  const el = document.getElementById('eum-cal-careers');
+  if (!el) return;
+  document.getElementById('eum-materias-list').innerHTML = seenCourseNames().map(n=>`<option value="${escAttr(n)}"></option>`).join('');
+  el.innerHTML = CAREER_ORDER.map((prog, ci)=>{
+    const lista = STATE.calendario[prog] || [];
+    return `<div class="admin-career-block">
+      <div class="admin-career-head"><span>${prog}</span><span class="count">${lista.length} materias</span></div>
+      <table class="admin-roster cal-table">
+        <thead><tr><th>Materia</th><th>Inicio</th><th>Fin</th><th></th></tr></thead>
+        <tbody>
+          ${lista.map((x,i)=>`<tr>
+            <td><input type="text" list="eum-materias-list" value="${escAttr(x.materia)}" onchange="EUM.editarCal(${ci},${i},'materia',this.value)"></td>
+            <td><input type="date" value="${escAttr(x.inicio)}" onchange="EUM.editarCal(${ci},${i},'inicio',this.value)"></td>
+            <td><input type="date" value="${escAttr(x.fin)}" onchange="EUM.editarCal(${ci},${i},'fin',this.value)"></td>
+            <td><button class="tag-remove" onclick="EUM.borrarMateriaCal(${ci},${i})">quitar</button></td>
+          </tr>`).join('') || '<tr><td colspan="4" style="color:var(--ink-soft);">Sin materias. Importa tu Excel o agrega una.</td></tr>'}
+        </tbody>
+      </table>
+      <div style="padding:10px 18px;"><button class="btn-secondary" onclick="EUM.agregarMateriaCal(${ci})">+ agregar materia</button></div>
+    </div>`;
+  }).join('');
+  renderCalDraft();
+}
+async function editarCal(ci, i, campo, valor){
+  const x = (STATE.calendario[CAREER_ORDER[ci]]||[])[i];
+  if (!x) return;
+  x[campo] = campo==='materia' ? valor.trim() : valor;
+  await saveCalendario();
+  render();
+}
+async function agregarMateriaCal(ci){
+  const prog = CAREER_ORDER[ci];
+  STATE.calendario[prog] = STATE.calendario[prog] || [];
+  STATE.calendario[prog].push({ materia:'', inicio:'', fin:'' });
+  await saveCalendario();
+  render();
+}
+async function borrarMateriaCal(ci, i){
+  const prog = CAREER_ORDER[ci];
+  const x = (STATE.calendario[prog]||[])[i];
+  if (!x || !confirm(`¿Quitar "${x.materia||'(sin nombre)'}" del calendario de ${prog}?`)) return;
+  STATE.calendario[prog].splice(i,1);
+  await saveCalendario();
+  render();
+}
+
+// ---- importar desde el Excel ----
+let CAL_DRAFT = null;
+function importarCalendarioFile(file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const draft = {}, avisos = [];
+      wb.SheetNames.forEach(nombre=>{
+        const carrera = SHEET_A_CARRERA[quitarAcentos(nombre).toLowerCase().trim()];
+        if (!carrera) return;
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, raw: true, defval: null });
+        const parsed = parseCalendarioRows(rows);
+        parsed.avisos.forEach(av=>avisos.push(`${carrera}: ${av}`));
+        draft[carrera] = parsed.map(x=>({ materia: canonicalMateriaName(x.materia), inicio: x.inicio, fin: x.fin }));
+      });
+      if (Object.keys(draft).length) draft.__avisos = avisos;
+      CAL_DRAFT = Object.keys(draft).length ? draft : { __vacio: true };
+    } catch(err){
+      console.error('no se pudo leer el calendario', err);
+      CAL_DRAFT = { __vacio: true };
+    }
+    renderCalDraft();
+  };
+  reader.readAsArrayBuffer(file);
+}
+function renderCalDraft(){
+  const el = document.getElementById('eum-cal-draft');
+  if (!el) return;
+  if (!CAL_DRAFT){ el.innerHTML = ''; return; }
+  if (CAL_DRAFT.__vacio){
+    el.innerHTML = '<div class="cal-draft">No encontré las pestañas por carrera (CONTABILIDAD, SOFTWARE, ADMINISTRACIÓN, MERCADOTECNIA) en ese archivo. <button class="tag-remove" onclick="EUM.descartarCalDraft()">cerrar</button></div>';
+    return;
+  }
+  el.innerHTML = `<div class="cal-draft">
+    <h3>Borrador importado — revísalo antes de aplicar</h3>
+    ${(CAL_DRAFT.__avisos||[]).length ? `<div style="background:var(--warn-soft); border-radius:8px; padding:8px 12px; margin-bottom:10px;"><b>Corregí errores de año del Excel:</b><ul>${CAL_DRAFT.__avisos.map(v=>`<li>${escAttr(v)}</li>`).join('')}</ul></div>` : ''}
+    ${CAREER_ORDER.filter(c=>CAL_DRAFT[c]).map(c=>`<b>${c}</b> (${CAL_DRAFT[c].length} materias)
+      <div>${CAL_DRAFT[c].map(x=>`<div class="cal-row"><span>${escAttr(x.materia)}</span><span class="mono">${x.inicio} → ${x.fin}</span></div>`).join('')}</div>`).join('<br>')}
+    <p style="margin:10px 0 0;">Al aplicar se reemplaza el calendario de esas carreras (después puedes corregir cualquier fecha a mano).</p>
+    <div style="display:flex; gap:10px; margin-top:8px;">
+      <button class="btn-primary" onclick="EUM.aplicarCalDraft()">Aplicar calendario</button>
+      <button class="btn-secondary" onclick="EUM.descartarCalDraft()">Descartar</button>
+    </div>
+  </div>`;
+}
+async function aplicarCalDraft(){
+  if (!CAL_DRAFT || CAL_DRAFT.__vacio) return;
+  CAREER_ORDER.forEach(c=>{ if (CAL_DRAFT[c]) STATE.calendario[c] = CAL_DRAFT[c]; });
+  CAL_DRAFT = null;
+  await saveCalendario();
+  render();
+}
+function descartarCalDraft(){ CAL_DRAFT = null; renderCalDraft(); }
 
 // ---------------- pestaña Administración ----------------
 function renderAdminTab(){
@@ -1266,6 +1567,20 @@ function openStudent(email){
   }
   const coursesHtml = seccion('✅ Completadas', completadas) + seccion('📖 En curso', enCurso) + seccion('◻ Sin iniciar', sinIniciar);
 
+  let calHtml = '';
+  const calSt = calendarStatus(a);
+  if (calSt){
+    const filas = calSt.detalle.filter(d=>d.estado!=='por_iniciar');
+    calHtml = `<div class="hist-section"><h4>Avance vs calendario (al corte ${latestDate()}) · <span class="badge ${CAL_BADGE[calSt.nivel]}">${CAL_LABEL[calSt.nivel]}</span></h4>
+      ${filas.map(d=>`<div class="hist-row" style="flex-wrap:wrap;">
+        <span style="flex:1; min-width:180px; font-weight:600;">${d.materia}</span>
+        <span class="mono" style="color:var(--ink-soft);">${d.inicio} → ${d.fin}</span>
+        <span class="mono">${d.real==null?'—':Math.round(d.real)+'%'} / ${Math.round(d.esperado)}% esp.</span>
+        <span style="color:var(--ink-soft);">${ESTADO_TXT[d.estado]}</span>
+      </div>`).join('') || '<p style="color:var(--ink-soft); font-size:12.5px;">Todavía no hay materias programadas a esta fecha.</p>'}
+    </div>`;
+  }
+
   // historial entre snapshots
   let histHtml = '';
   if (STATE.snapshotDates.length <= 1){
@@ -1296,6 +1611,7 @@ function openStudent(email){
           <span class="badge" style="background:var(--paper); color:var(--ink-soft);">${programa}</span>
         </div>
         ${coursesHtml}
+        ${calHtml}
         ${histHtml}
         <div style="margin-top:18px;">${excludeBtn}</div>
       </div>
@@ -1650,10 +1966,13 @@ window.EUM = {
   setEstatusMaestro, reasignarCarrera, excludeFromMaestro, registrarPendiente, addManualStudent,
   deleteSnapshot, login, logout, resetPassword, importRosterCsv,
   agregarCorreoAlterno, quitarCorreoAlterno, vincularPendiente,
+  editarCal, agregarMateriaCal, borrarMateriaCal, aplicarCalDraft, descartarCalDraft,
 };
 
 document.getElementById('eum-search').addEventListener('input', e=>{ STATE.search = e.target.value; renderRoster(); });
 document.getElementById('eum-filter-status').addEventListener('change', e=>{ STATE.statusFilter = e.target.value; renderRoster(); });
+document.getElementById('eum-filter-cal').addEventListener('change', e=>{ STATE.calFilter = e.target.value; renderRoster(); });
+document.getElementById('eum-cal-file').addEventListener('change', e=>{ if (e.target.files[0]) importarCalendarioFile(e.target.files[0]); e.target.value=''; });
 document.getElementById('eum-clear-career').addEventListener('click', clearCareer);
 document.getElementById('eum-risk-chip').addEventListener('click', toggleRiskOnly);
 document.querySelectorAll('#eum-app table.roster thead th').forEach(th=>{

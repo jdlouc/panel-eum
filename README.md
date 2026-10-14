@@ -38,6 +38,9 @@ Ya con el sitio publicado, entra con tu cuenta y ve a la pestaña **Administraci
 
 Después, cada semana: pestaña **Seguimiento → Cargar nuevo reporte semanal de Talisis**, sube el CSV que envía la plataforma.
 
+### 5. Calendario de materias
+En la pestaña **Calendario** viven las materias programadas por carrera con su fecha de inicio y de fin (todo editable). La primera vez usa **Importar desde Excel** con el archivo CALENDARIZACIÓN EUM, revisa el borrador y aplícalo. Seguimiento compara el avance de cada alumna contra ese calendario (columna "Calendario" y sección en su ficha), evaluado a la fecha del último corte cargado. La tolerancia para "ligeramente atrasada" es `TOLERANCIA_CALENDARIO` al inicio del script.
+
 ## Qué NO subir nunca a este repo
 - Los CSV de roster o de reportes semanales (ya están en `.gitignore`).
 - `CONTEXTO_PANEL_EUM.md` u otras notas internas que mencionen alumnas reales.
