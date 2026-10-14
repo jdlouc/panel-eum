@@ -1267,6 +1267,42 @@ function parseCalendarioRows(rows){
   return res;
 }
 
+// Formato simple de tabla (una fila por materia): columnas Carrera | Materia | Inicio | Fin.
+// Devuelve null si la hoja no tiene esos encabezados (entonces se intenta el diseño original del Excel).
+function fechaAYmd(v){
+  if (v==null || v==='') return '';
+  if (typeof v==='number'){ const dc = XLSX.SSF.parse_date_code(v); return dc ? ymd(dc.y, dc.m, dc.d) : ''; }
+  const t = String(v).trim(); let m;
+  if ((m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return ymd(+m[1], +m[2], +m[3]);
+  if ((m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/))) return ymd(+m[3], +m[2], +m[1]);
+  return '';
+}
+function carreraDesdeTexto(t){
+  const k = quitarAcentos(String(t||'')).toLowerCase();
+  if (k.includes('contab')) return 'Contabilidad y Finanzas';
+  if (k.includes('softw') || k.includes('sistemas')) return 'Software y Sistemas Computacionales';
+  if (k.includes('admin')) return 'Administración';
+  if (k.includes('mercad')) return 'Mercadotecnia Estratégica';
+  return null;
+}
+function parseCalendarioTabla(rows){
+  const norm = c => quitarAcentos(String(c==null?'':c)).toLowerCase().trim();
+  const hi = rows.findIndex(r=>{ const ks = (r||[]).map(norm); return ks.includes('carrera') && ks.includes('materia') && ks.includes('inicio') && ks.includes('fin'); });
+  if (hi < 0) return null;
+  const ks = rows[hi].map(norm);
+  const iC = ks.indexOf('carrera'), iM = ks.indexOf('materia'), iI = ks.indexOf('inicio'), iF = ks.indexOf('fin');
+  const porCarrera = {}, avisos = [];
+  rows.slice(hi+1).forEach((r, n)=>{
+    if (!r || r.every(c=>c==null || String(c).trim()==='')) return;
+    const carrera = carreraDesdeTexto(r[iC]), materia = String(r[iM]==null?'':r[iM]).replace(/\s+/g,' ').trim();
+    const inicio = fechaAYmd(r[iI]), fin = fechaAYmd(r[iF]);
+    if (!carrera || !materia || !inicio || !fin || inicio > fin){ avisos.push(`Fila ${hi+2+n}: no se pudo leer (${materia||'sin materia'}); se omitió`); return; }
+    (porCarrera[carrera] = porCarrera[carrera] || []).push({ materia, inicio, fin });
+  });
+  Object.values(porCarrera).forEach(l=>l.sort((a,b)=>a.inicio.localeCompare(b.inicio) || a.materia.localeCompare(b.materia)));
+  return { porCarrera, avisos };
+}
+
 // Estado de UNA materia para una alumna, a la fecha de corte. real = progreso (0-100) o null si no aparece en su reporte.
 function evalMateria(entry, real, corteStr){
   const corte = ymdToUTC(corteStr), ini = ymdToUTC(entry.inicio), fin = ymdToUTC(entry.fin);
@@ -1376,9 +1412,17 @@ function importarCalendarioFile(file){
       const wb = XLSX.read(e.target.result, { type: 'array' });
       const draft = {}, avisos = [];
       wb.SheetNames.forEach(nombre=>{
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, raw: true, defval: null });
+        const tabla = parseCalendarioTabla(rows);
+        if (tabla){
+          Object.keys(tabla.porCarrera).forEach(c=>{
+            draft[c] = (draft[c]||[]).concat(tabla.porCarrera[c].map(x=>({ materia: canonicalMateriaName(x.materia), inicio: x.inicio, fin: x.fin })));
+          });
+          tabla.avisos.forEach(av=>avisos.push(av));
+          return;
+        }
         const carrera = SHEET_A_CARRERA[quitarAcentos(nombre).toLowerCase().trim()];
         if (!carrera) return;
-        const rows = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, raw: true, defval: null });
         const parsed = parseCalendarioRows(rows);
         parsed.avisos.forEach(av=>avisos.push(`${carrera}: ${av}`));
         draft[carrera] = parsed.map(x=>({ materia: canonicalMateriaName(x.materia), inicio: x.inicio, fin: x.fin }));
@@ -1403,7 +1447,7 @@ function renderCalDraft(){
   }
   el.innerHTML = `<div class="cal-draft">
     <h3>Borrador importado — revísalo antes de aplicar</h3>
-    ${(CAL_DRAFT.__avisos||[]).length ? `<div style="background:var(--warn-soft); border-radius:8px; padding:8px 12px; margin-bottom:10px;"><b>Corregí errores de año del Excel:</b><ul>${CAL_DRAFT.__avisos.map(v=>`<li>${escAttr(v)}</li>`).join('')}</ul></div>` : ''}
+    ${(CAL_DRAFT.__avisos||[]).length ? `<div style="background:var(--warn-soft); border-radius:8px; padding:8px 12px; margin-bottom:10px;"><b>Avisos al leer el Excel:</b><ul>${CAL_DRAFT.__avisos.map(v=>`<li>${escAttr(v)}</li>`).join('')}</ul></div>` : ''}
     ${CAREER_ORDER.filter(c=>CAL_DRAFT[c]).map(c=>`<b>${c}</b> (${CAL_DRAFT[c].length} materias)
       <div>${CAL_DRAFT[c].map(x=>`<div class="cal-row"><span>${escAttr(x.materia)}</span><span class="mono">${x.inicio} → ${x.fin}</span></div>`).join('')}</div>`).join('<br>')}
     <p style="margin:10px 0 0;">Al aplicar se reemplaza el calendario de esas carreras (después puedes corregir cualquier fecha a mano).</p>

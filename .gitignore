@@ -1,5 +1,6 @@
 # Datos reales de alumnas — nunca deben subirse a un repo público
 *.csv
+*.xlsx
 CONTEXTO_PANEL_EUM.md
 
 # Config local del agente
