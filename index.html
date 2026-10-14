@@ -698,6 +698,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · calendario v2 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -1269,12 +1270,16 @@ function parseCalendarioRows(rows){
 
 // Formato simple de tabla (una fila por materia): columnas Carrera | Materia | Inicio | Fin.
 // Devuelve null si la hoja no tiene esos encabezados (entonces se intenta el diseño original del Excel).
+// mes por nombre completo o abreviado ("oct", "sept", "octubre")
+function mesNum(n){ n = String(n).replace(/\./g,''); const k = Object.keys(MESES_ES).find(x=>x===n || (n.length>=3 && x.startsWith(n))); return k ? MESES_ES[k] : 0; }
 function fechaAYmd(v){
   if (v==null || v==='') return '';
+  if (v instanceof Date && !isNaN(v)) return ymd(v.getFullYear(), v.getMonth()+1, v.getDate());
   if (typeof v==='number'){ const dc = XLSX.SSF.parse_date_code(v); return dc ? ymd(dc.y, dc.m, dc.d) : ''; }
-  const t = String(v).trim(); let m;
+  const t = quitarAcentos(String(v)).toLowerCase().trim(); let m;
   if ((m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return ymd(+m[1], +m[2], +m[3]);
-  if ((m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/))) return ymd(+m[3], +m[2], +m[1]);
+  if ((m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/))) return ymd(m[3].length===2 ? 2000+ +m[3] : +m[3], +m[2], +m[1]);
+  if ((m = t.match(/^(\d{1,2})(?:\s+de)?[\s\-\/]+([a-z]+)\.?(?:\s+de)?[\s\-\/]+(\d{2,4})/)) && mesNum(m[2])) return ymd(m[3].length===2 ? 2000+ +m[3] : +m[3], mesNum(m[2]), +m[1]);
   return '';
 }
 function carreraDesdeTexto(t){
@@ -1410,11 +1415,12 @@ function importarCalendarioFile(file){
   reader.onload = e => {
     try {
       const wb = XLSX.read(e.target.result, { type: 'array' });
-      const draft = {}, avisos = [];
+      const draft = {}, avisos = [], leidas = [];
       wb.SheetNames.forEach(nombre=>{
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, raw: true, defval: null });
         const tabla = parseCalendarioTabla(rows);
         if (tabla){
+          leidas.push(`${nombre}: tabla con ${Object.values(tabla.porCarrera).reduce((n,l)=>n+l.length,0)} materias válidas`);
           Object.keys(tabla.porCarrera).forEach(c=>{
             draft[c] = (draft[c]||[]).concat(tabla.porCarrera[c].map(x=>({ materia: canonicalMateriaName(x.materia), inicio: x.inicio, fin: x.fin })));
           });
@@ -1422,16 +1428,21 @@ function importarCalendarioFile(file){
           return;
         }
         const carrera = SHEET_A_CARRERA[quitarAcentos(nombre).toLowerCase().trim()];
-        if (!carrera) return;
+        if (!carrera){
+          const enc = (rows.find(r=>r && r.some(c=>c!=null && String(c).trim()!=='')) || []).filter(c=>c!=null).slice(0,6).join(' | ');
+          leidas.push(`${nombre}: no reconocida (sin encabezados Carrera / Materia / Inicio / Fin; primera fila: ${enc||'vacía'})`);
+          return;
+        }
+        leidas.push(`${nombre}: diseño original de ${carrera}`);
         const parsed = parseCalendarioRows(rows);
         parsed.avisos.forEach(av=>avisos.push(`${carrera}: ${av}`));
         draft[carrera] = parsed.map(x=>({ materia: canonicalMateriaName(x.materia), inicio: x.inicio, fin: x.fin }));
       });
       if (Object.keys(draft).length) draft.__avisos = avisos;
-      CAL_DRAFT = Object.keys(draft).length ? draft : { __vacio: true };
+      CAL_DRAFT = Object.keys(draft).length ? draft : { __vacio: true, leidas, avisos };
     } catch(err){
       console.error('no se pudo leer el calendario', err);
-      CAL_DRAFT = { __vacio: true };
+      CAL_DRAFT = { __vacio: true, leidas: ['No se pudo abrir el archivo como Excel ('+(err && err.message || err)+')'], avisos: [] };
     }
     renderCalDraft();
   };
@@ -1442,7 +1453,11 @@ function renderCalDraft(){
   if (!el) return;
   if (!CAL_DRAFT){ el.innerHTML = ''; return; }
   if (CAL_DRAFT.__vacio){
-    el.innerHTML = '<div class="cal-draft">No encontré las pestañas por carrera (CONTABILIDAD, SOFTWARE, ADMINISTRACIÓN, MERCADOTECNIA) en ese archivo. <button class="tag-remove" onclick="EUM.descartarCalDraft()">cerrar</button></div>';
+    el.innerHTML = `<div class="cal-draft">
+      <b>No pude leer materias de ese archivo.</b> Necesito una hoja con las columnas <b>Carrera, Materia, Inicio, Fin</b> (una fila por materia) o las pestañas por carrera del Excel original (CONTABILIDAD, SOFTWARE, ADMINISTRACIÓN, MERCADOTECNIA).
+      ${(CAL_DRAFT.leidas||[]).length ? `<p style="margin:8px 0 0;">Lo que vi en el archivo:</p><ul>${CAL_DRAFT.leidas.map(v=>`<li>${escAttr(v)}</li>`).join('')}</ul>` : ''}
+      ${(CAL_DRAFT.avisos||[]).length ? `<p style="margin:8px 0 0;">Filas que no pude leer:</p><ul>${CAL_DRAFT.avisos.slice(0,8).map(v=>`<li>${escAttr(v)}</li>`).join('')}</ul>` : ''}
+      <button class="tag-remove" onclick="EUM.descartarCalDraft()">cerrar</button></div>`;
     return;
   }
   el.innerHTML = `<div class="cal-draft">
