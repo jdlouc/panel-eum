@@ -289,7 +289,7 @@
 #eum-app .modal {
   background: var(--paper-raised);
   border-radius: 16px;
-  max-width: 640px;
+  max-width: 760px;
   width: 100%;
   padding: 28px;
   position: relative;
@@ -430,6 +430,34 @@
 }
 #eum-app table.cal-table { min-width: 700px; }
 #eum-app table.cal-table input[type=text] { min-width: 280px; }
+/* ---------- ruta según calendario (ficha) ---------- */
+#eum-app .ruta-resumen { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-bottom:12px; font-size:12.5px; color:var(--ink-soft); }
+#eum-app .ruta-strip { display:flex; align-items:stretch; gap:6px; overflow-x:auto; padding:4px 2px 10px; margin-bottom:14px; }
+#eum-app .ruta-pill { flex:0 0 auto; max-width:130px; padding:6px 9px; border-radius:8px; font-size:10.5px; font-weight:600; line-height:1.25; border:1.5px solid transparent; }
+#eum-app .ruta-pill.ok { background: var(--accent-green-soft); color:#3E7A22; }
+#eum-app .ruta-pill.warn { background: var(--warn-soft); color: var(--warn); }
+#eum-app .ruta-pill.bad { background: var(--risk-soft); color: var(--risk); }
+#eum-app .ruta-pill.idle { background: var(--paper); color: var(--ink-soft); border:1.5px dashed var(--line); }
+#eum-app .ruta-pill.vigente { border-color: var(--brand); }
+#eum-app .ruta-hoy { flex:0 0 auto; align-self:center; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#fff; background:var(--brand); border-radius:100px; padding:3px 8px; }
+#eum-app .ruta-sec { font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-soft); font-weight:700; margin:16px 0 8px; }
+#eum-app .ruta-linea { display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; font-size:12.5px; padding:6px 0; border-bottom:1px dashed var(--line); }
+#eum-app .ruta-linea .rl-n { flex:1; min-width:200px; font-weight:600; }
+#eum-app .ruta-linea .rl-d { color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:11.5px; }
+#eum-app details.ruta-det { margin-top:6px; }
+#eum-app details.ruta-det > summary { cursor:pointer; font-size:12px; font-weight:600; color:var(--ink-soft); margin:6px 0; }
+#eum-app .ruta-card { border:1px solid var(--line); border-left-width:4px; border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+#eum-app .ruta-card.ok { border-left-color: var(--accent-green); }
+#eum-app .ruta-card.warn { border-left-color: var(--warn); }
+#eum-app .ruta-card.bad { border-left-color: var(--risk); }
+#eum-app .rc-top { display:flex; justify-content:space-between; gap:10px; align-items:baseline; flex-wrap:wrap; margin-bottom:4px; }
+#eum-app .rc-top b { font-size:13.5px; }
+#eum-app .rc-sub { font-size:12px; color:var(--ink-soft); margin-bottom:8px; }
+#eum-app .rc-bar { position:relative; height:10px; border-radius:6px; background: var(--paper); margin:6px 0 4px; }
+#eum-app .rc-fill { height:100%; border-radius:6px; background: var(--brand); }
+#eum-app .rc-mark { position:absolute; top:-4px; width:3px; height:18px; background: var(--ink); border-radius:2px; }
+#eum-app .rc-nums { font-size:12px; font-family:'IBM Plex Mono',monospace; }
+#eum-app .rc-meta { font-size:11.5px; color:var(--ink-soft); margin-top:6px; }
 #eum-app .cal-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
 #eum-app .cal-draft { background: var(--brand-soft); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; font-size: 12.5px; }
 #eum-app .cal-draft h3 { font-family:'Fraunces',serif; font-size: 16px; margin: 0 0 8px 0; }
@@ -698,7 +726,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · calendario v2 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · ruta de la alumna v1 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -1191,8 +1219,35 @@ const DIA_MS = 86400000;
 function quitarAcentos(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 // Clave para cruzar el nombre del calendario con el de Talisis aunque cambie el orden de las palabras
 // ("Estrategias de autonomía para el aprendizaje" = "Estrategias para la autonomía en el aprendizaje").
+const MK_CACHE = new Map();
 function materiaKey(n){
-  return quitarAcentos(String(n||'')).toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(t=>t && !MATERIA_STOP.has(t)).sort().join(' ');
+  const k0 = String(n||'');
+  let k = MK_CACHE.get(k0);
+  if (k===undefined){
+    k = quitarAcentos(k0).toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(t=>t && !MATERIA_STOP.has(t)).sort().join(' ');
+    MK_CACHE.set(k0, k);
+  }
+  return k;
+}
+// Talisis a veces agrega un código al inicio y un sufijo al final ("HTT01 Herramientas tecnológicas de productividad AS").
+// Un curso corresponde a la materia del calendario si tiene las mismas palabras, o todas las del calendario y las
+// sobrantes parecen códigos (llevan dígitos o tienen 3 letras o menos).
+function esTokenCodigo(t){ return /\d/.test(t) || t.length <= 3; }
+function mismaMateria(kCal, kCurso){
+  if (!kCal || !kCurso) return false;
+  if (kCal === kCurso) return true;
+  const a = kCal.split(' '), b = kCurso.split(' ');
+  return a.every(t=>b.includes(t)) && b.filter(t=>!a.includes(t)).every(esTokenCodigo);
+}
+// Curso de Talisis de la alumna que corresponde a una materia del calendario (el más avanzado si hay varios)
+function cursoDeMateria(alumna, entrada){
+  const k = materiaKey(entrada.materia);
+  let mejor = null;
+  (alumna.cursos||[]).forEach(c=>{
+    if (!mismaMateria(k, materiaKey(c.curso))) return;
+    if (!mejor || (c.progreso||0) > (mejor.progreso||0)) mejor = c;
+  });
+  return mejor;
 }
 function ymd(y,m,d){ return new Date(Date.UTC(y,m-1,d)).toISOString().slice(0,10); }
 function ymdToUTC(str){ const [y,m,d] = String(str).split('-').map(Number); return Date.UTC(y,m-1,d); }
@@ -1209,7 +1264,7 @@ function seenCourseNames(){
 }
 function canonicalMateriaName(nombre){
   const k = materiaKey(nombre);
-  const hit = seenCourseNames().find(n=>materiaKey(n)===k);
+  const hit = seenCourseNames().find(n=>materiaKey(n)===k); // solo coincidencia exacta de palabras; los códigos de Talisis se toleran al cruzar
   return hit || nombre;
 }
 
@@ -1338,12 +1393,7 @@ function calendarStatus(alumna){
   const cal = prog ? (STATE.calendario[prog]||[]).filter(x=>x.materia && x.inicio && x.fin) : [];
   const corte = latestDate();
   if (!cal.length || !corte) return null;
-  const porClave = {};
-  (alumna.cursos||[]).forEach(c=>{
-    const k = materiaKey(c.curso), p = c.progreso==null ? 0 : c.progreso;
-    if (porClave[k]==null || p > porClave[k]) porClave[k] = p;
-  });
-  const detalle = cal.map(x=>{ const k = materiaKey(x.materia); return evalMateria(x, k in porClave ? porClave[k] : null, corte); });
+  const detalle = cal.map(x=>{ const c = cursoDeMateria(alumna, x); return evalMateria(x, c ? (c.progreso==null ? 0 : c.progreso) : null, corte); });
   const est = detalle.map(d=>d.estado);
   let nivel = 'al_corriente';
   if (est.some(e=>e==='rezagada' || e==='sin_matricular')) nivel = 'rezago';
@@ -1357,6 +1407,107 @@ const CAL_ORDEN = { rezago:0, atrasada:1, ligera:2, al_corriente:3 };
 const ESTADO_TXT = { concluida:'concluida', rezagada:'cerró sin concluir', sin_matricular:'no aparece en su reporte (ya cerró)', sin_matricular_vigente:'no aparece en su reporte (vigente)', adelantada:'adelantada', al_corriente:'al corriente', ligera:'ligeramente atrasada', atrasada:'atrasada', por_iniciar:'por iniciar' };
 function calTooltip(st){
   return st.detalle.filter(d=>d.estado!=='por_iniciar').map(d=>`${d.materia}: ${ESTADO_TXT[d.estado]} (${d.real==null?'—':Math.round(d.real)+'%'} de ${Math.round(d.esperado)}% esperado)`).join('\n');
+}
+
+// ---- ruta de la alumna según el calendario de su carrera ----
+const MODULOS_4SEM = ['Introducción y Módulo 1','Módulo 2','Módulos 3 y 4','Módulos 5 y cierre'];
+const MES_CORTO = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const ESTADO_CHIP = { concluida:'Concluida', adelantada:'Adelantada', al_corriente:'Al corriente', ligera:'Lig. atrasada', atrasada:'Atrasada', rezagada:'Sin concluir', sin_matricular:'Sin matricular', sin_matricular_vigente:'Sin matricular', por_iniciar:'Por iniciar' };
+const ESTADO_CLASE = { concluida:'ok', adelantada:'ok', al_corriente:'ok', ligera:'warn', atrasada:'bad', rezagada:'bad', sin_matricular:'bad', sin_matricular_vigente:'warn', por_iniciar:'idle' };
+const ESTADO_BADGE = { ok:'b-verde', warn:'b-amarillo', bad:'b-rojo', idle:'b-baja' };
+
+function fmtDM(str, conAnio){
+  const [y,m,d] = str.split('-').map(Number);
+  return `${String(d).padStart(2,'0')} ${MES_CORTO[m-1]}${conAnio ? ' '+y : ''}`;
+}
+function fmtVentana(ini, fin, corte){
+  const anio = corte.slice(0,4);
+  const conAnio = ini.slice(0,4)!==anio || fin.slice(0,4)!==anio;
+  return `${fmtDM(ini, conAnio)} – ${fmtDM(fin, conAnio)}`;
+}
+
+// Devuelve la ruta de la alumna (materias del calendario de su carrera, en orden) con su estado a la fecha del corte,
+// o null si su carrera no tiene calendario cargado.
+function rutaAlumna(alumna){
+  const prog = effectivePrograma(alumna);
+  const cal = prog ? (STATE.calendario[prog]||[]).filter(x=>x.materia && x.inicio && x.fin).slice().sort((a,b)=>a.inicio.localeCompare(b.inicio) || a.materia.localeCompare(b.materia)) : [];
+  const corte = latestDate();
+  if (!cal.length || !corte) return null;
+  const hoy = ymdToUTC(corte);
+  const usados = new Set();
+  const items = cal.map(x=>{
+    const c = cursoDeMateria(alumna, x);
+    if (c) usados.add(c);
+    const real = c ? (c.progreso==null ? 0 : c.progreso) : null;
+    const ev = evalMateria(x, real, corte);
+    const ini = ymdToUTC(x.inicio), fin = ymdToUTC(x.fin);
+    const vigente = hoy >= ini && hoy <= fin;
+    const totalSemanas = Math.max(1, Math.round((((fin-ini)/DIA_MS)+1)/7));
+    const semana = vigente ? Math.min(totalSemanas, Math.floor((hoy-ini)/DIA_MS/7)+1) : null;
+    const visita = c && c.ultima_visita ? c.ultima_visita.slice(0,10) : null;
+    return Object.assign(ev, {
+      curso: c, calificacion: (c && c.calificacion) || null, ultimaVisita: visita,
+      diasSinVisita: visita ? Math.round((hoy - ymdToUTC(visita))/DIA_MS) : null,
+      cerrada: hoy > fin, vigente, futura: hoy < ini, semana, totalSemanas,
+      moduloEsperado: vigente && totalSemanas===4 ? MODULOS_4SEM[semana-1] : null,
+      faltan: (ev.estado==='atrasada' || ev.estado==='ligera') ? Math.ceil(ev.esperado - ev.real) : 0,
+    });
+  });
+  return { items, otras: (alumna.cursos||[]).filter(c=>!usados.has(c)), corte };
+}
+
+function rutaHtml(alumna, ruta, courseCard){
+  const { items, otras, corte } = ruta;
+  const cerradas = items.filter(i=>i.cerrada), vigentes = items.filter(i=>i.vigente), futuras = items.filter(i=>i.futura);
+  const proximas = futuras.slice(0,2), resto = futuras.slice(2);
+  const st = calendarStatus(alumna);
+  const concl = cerradas.filter(i=>i.estado==='concluida').length;
+  const pill = (i, extra) => `<span class="ruta-pill ${ESTADO_CLASE[i.estado]} ${extra||''}" title="${escAttr(i.materia+' · '+fmtVentana(i.inicio,i.fin,corte)+' · '+ESTADO_CHIP[i.estado])}">${escAttr(i.materia.length>26 ? i.materia.slice(0,25)+'…' : i.materia)}</span>`;
+  const chip = i => `<span class="badge ${ESTADO_BADGE[ESTADO_CLASE[i.estado]]}">${ESTADO_CHIP[i.estado]}</span>`;
+  const hace = d => d==null ? '' : (d<=0 ? 'hoy' : (d===1 ? 'hace 1 día' : `hace ${d} días`));
+  const linea = i => `<div class="ruta-linea"><span class="rl-n">${escAttr(i.materia)}</span><span class="rl-d">${fmtVentana(i.inicio,i.fin,corte)}</span>${i.cerrada && i.calificacion ? `<span class="mono">${escAttr(i.calificacion)}</span>` : ''}${chip(i)}</div>`;
+  const hayProblema = cerradas.some(i=>i.estado!=='concluida');
+
+  const tarjeta = i => {
+    const real = i.real==null ? 0 : Math.max(0, Math.min(100, i.real));
+    const esp = Math.max(0, Math.min(100, i.esperado));
+    return `<div class="ruta-card ${ESTADO_CLASE[i.estado]}">
+      <div class="rc-top"><b>${escAttr(i.materia)}</b>${chip(i)}</div>
+      <div class="rc-sub">${fmtVentana(i.inicio,i.fin,corte)} · Semana ${i.semana} de ${i.totalSemanas}${i.moduloEsperado ? ' · debería ir en <b>'+i.moduloEsperado+'</b>' : ''}</div>
+      ${i.real==null
+        ? '<div class="rc-meta" style="margin:0;">No aparece en su reporte de Talisis: no está matriculada en esta materia.</div>'
+        : `<div class="rc-bar"><div class="rc-fill" style="width:${real}%"></div><div class="rc-mark" style="left:calc(${esp}% - 1px)" title="Esperado hoy: ${Math.round(esp)}%"></div></div>
+           <div class="rc-nums">Real ${Math.round(i.real)}% · Esperado hoy ${Math.round(i.esperado)}%${i.faltan ? ` · le faltan ${i.faltan} pts` : ''}</div>
+           <div class="rc-meta">${i.calificacion ? 'Calificación parcial: <b>'+escAttr(i.calificacion)+'</b> · ' : ''}Última visita: ${i.ultimaVisita ? fmtDate(i.ultimaVisita)+' ('+hace(i.diasSinVisita)+')' : '—'}</div>`}
+    </div>`;
+  };
+
+  // tira: cerradas, "hoy", en curso y las próximas 2
+  const tira = cerradas.map(i=>pill(i)).join('') + '<span class="ruta-hoy">hoy</span>' + vigentes.map(i=>pill(i,'vigente')).join('') + proximas.map(i=>pill(i)).join('');
+
+  return `<div class="hist-section" style="margin-top:6px; padding-top:14px;">
+    <h4>Ruta según calendario · ${effectivePrograma(alumna)}</h4>
+    <div class="ruta-resumen">
+      ${st ? `<span class="badge ${CAL_BADGE[st.nivel]}">${CAL_LABEL[st.nivel]}</span>` : ''}
+      <span>${concl} de ${cerradas.length} materias cerradas concluidas</span>
+      <span>· al corte ${corte}</span>
+    </div>
+    <div class="ruta-strip">${tira}</div>
+
+    <div class="ruta-sec">En curso (${vigentes.length})</div>
+    ${vigentes.map(tarjeta).join('') || '<p style="color:var(--ink-soft); font-size:12.5px; margin:0 0 6px;">Sin materias en curso a esta fecha (periodo de descanso o entre cuatrimestres).</p>'}
+
+    <div class="ruta-sec">Próximas</div>
+    ${proximas.map(linea).join('') || '<p style="color:var(--ink-soft); font-size:12.5px; margin:0;">No hay más materias programadas.</p>'}
+    ${resto.length ? `<details class="ruta-det"><summary>Ver toda la ruta (${resto.length} materias más)</summary>${resto.map(linea).join('')}</details>` : ''}
+
+    <details class="ruta-det" ${hayProblema ? 'open' : ''}>
+      <summary>Materias cerradas (${cerradas.length}) · ${concl} concluidas${hayProblema ? ' · '+(cerradas.length-concl)+' sin concluir' : ''}</summary>
+      ${cerradas.map(linea).join('') || '<p style="color:var(--ink-soft); font-size:12.5px;">Aún no cierra ninguna.</p>'}
+    </details>
+
+    ${otras.length ? `<div class="ruta-sec">Otras materias en su reporte (${otras.length})</div>${otras.map(courseCard).join('')}` : ''}
+  </div>`;
 }
 
 // ---- pestaña Calendario ----
@@ -1626,19 +1777,11 @@ function openStudent(email){
   }
   const coursesHtml = seccion('✅ Completadas', completadas) + seccion('📖 En curso', enCurso) + seccion('◻ Sin iniciar', sinIniciar);
 
-  let calHtml = '';
-  const calSt = calendarStatus(a);
-  if (calSt){
-    const filas = calSt.detalle.filter(d=>d.estado!=='por_iniciar');
-    calHtml = `<div class="hist-section"><h4>Avance vs calendario (al corte ${latestDate()}) · <span class="badge ${CAL_BADGE[calSt.nivel]}">${CAL_LABEL[calSt.nivel]}</span></h4>
-      ${filas.map(d=>`<div class="hist-row" style="flex-wrap:wrap;">
-        <span style="flex:1; min-width:180px; font-weight:600;">${d.materia}</span>
-        <span class="mono" style="color:var(--ink-soft);">${d.inicio} → ${d.fin}</span>
-        <span class="mono">${d.real==null?'—':Math.round(d.real)+'%'} / ${Math.round(d.esperado)}% esp.</span>
-        <span style="color:var(--ink-soft);">${ESTADO_TXT[d.estado]}</span>
-      </div>`).join('') || '<p style="color:var(--ink-soft); font-size:12.5px;">Todavía no hay materias programadas a esta fecha.</p>'}
-    </div>`;
-  }
+  // ruta según calendario (reemplaza los bloques por estado cuando su carrera ya tiene calendario)
+  const ruta = rutaAlumna(a);
+  const cuerpoHtml = ruta
+    ? rutaHtml(a, ruta, courseCard)
+    : coursesHtml + `<p style="color:var(--ink-soft); font-size:12.5px;">Para ver su ruta según calendario, carga el calendario de su carrera en la pestaña "Calendario".</p>`;
 
   // historial entre snapshots
   let histHtml = '';
@@ -1669,13 +1812,15 @@ function openStudent(email){
           <span class="badge ${badgeClass}">${badgeLabel}</span>
           <span class="badge" style="background:var(--paper); color:var(--ink-soft);">${programa}</span>
         </div>
-        ${coursesHtml}
-        ${calHtml}
+        ${cuerpoHtml}
         ${histHtml}
         <div style="margin-top:18px;">${excludeBtn}</div>
       </div>
     </div>
   `;
+  const tira = document.querySelector('#eum-modal-root .ruta-strip');
+  const marca = tira && tira.querySelector('.ruta-hoy');
+  if (tira && marca) tira.scrollLeft = Math.max(0, marca.offsetLeft - tira.clientWidth/3);
 }
 function closeModal(){ document.getElementById('eum-modal-root').innerHTML=''; }
 
