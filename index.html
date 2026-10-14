@@ -792,7 +792,43 @@ async function saveRosterMaestro(){
 }
 
 function latestDate(){ return STATE.snapshotDates[STATE.snapshotDates.length-1]; }
-function latestSnapshot(){ return STATE.snapshots[latestDate()] || []; }
+function latestSnapshot(){ return mergeByStudent(STATE.snapshots[latestDate()] || []); }
+
+// Si un corte guardado trae a la misma alumna con dos correos (por ejemplo, subido
+// antes de vincular el correo nuevo), aquí se unen en un solo registro al leerlo:
+// materias combinadas (si se repite, gana la más avanzada), primer/último acceso
+// más extremos, y baja solo si todos los registros estaban en baja.
+function mergeByStudent(arr){
+  const groups = new Map();
+  arr.forEach(a=>{
+    const key = canonicalEmail(a.email);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(a);
+  });
+  const out = [];
+  groups.forEach((list, key)=>{
+    if (list.length===1){ out.push(list[0]); return; }
+    const byAct = list.slice().sort((x,y)=>(y.ultimo_login||'').localeCompare(x.ultimo_login||''));
+    const base = byAct[0];
+    const cursos = {};
+    list.forEach(r=>(r.cursos||[]).forEach(c=>{
+      const ya = cursos[c.curso];
+      if (!ya || (c.progreso||0) > (ya.progreso||0)) cursos[c.curso] = c;
+    }));
+    const firsts = list.map(r=>r.primer_login).filter(Boolean).sort();
+    const joins = list.map(r=>r.se_unio).filter(Boolean).sort();
+    out.push(Object.assign({}, base, {
+      email: key,
+      matricula: list.map(r=>r.matricula).find(Boolean) || null,
+      telefono: list.map(r=>r.telefono).find(Boolean) || null,
+      primer_login: firsts[0] || null,
+      se_unio: joins[0] || null,
+      cursos: Object.values(cursos),
+      baja: list.every(r=>r.baja),
+    }));
+  });
+  return out;
+}
 
 // ---------------- roster maestro helpers ----------------
 // Una alumna puede haber cambiado de correo: el roster guarda su correo principal (m.email)
@@ -1237,7 +1273,7 @@ function openStudent(email){
   } else {
     const courseNames = [...new Set((a.cursos||[]).map(c=>c.curso))];
     const rows = STATE.snapshotDates.map(d=>{
-      const snap = STATE.snapshots[d].find(x=>canonicalEmail(x.email)===canonicalEmail(email));
+      const snap = mergeByStudent(STATE.snapshots[d]).find(x=>x.email===canonicalEmail(email));
       if (!snap) return `<div class="hist-row"><span class="hd">${d}</span><span style="color:var(--ink-soft);">sin registro</span></div>`;
       const summary = (snap.cursos||[]).map(c=>`${c.curso.slice(0,18)}: ${fmtPct(c.progreso)}`).join(' · ');
       return `<div class="hist-row"><span class="hd">${d}</span><span>${summary}</span></div>`;
