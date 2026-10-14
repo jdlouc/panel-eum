@@ -41,6 +41,16 @@ Después, cada semana: pestaña **Seguimiento → Cargar nuevo reporte semanal d
 ### 5. Calendario de materias
 En la pestaña **Calendario** viven las materias programadas por carrera con su fecha de inicio y de fin (todo editable). La primera vez usa **Importar desde Excel** con el archivo CALENDARIZACIÓN EUM, revisa el borrador y aplícalo. Seguimiento compara el avance de cada alumna contra ese calendario (columna "Calendario" y sección en su ficha), evaluado a la fecha del último corte cargado. La tolerancia para "ligeramente atrasada" es `TOLERANCIA_CALENDARIO` al inicio del script. En la ficha de cada alumna, la sección **Ruta según calendario** muestra sus materias cerradas, las que lleva en curso (avance real contra el esperado de hoy, semana y módulo que le toca) y las próximas.
 
+### 6. Seguimiento: prioridad, filtros y bitácora
+Cada alumna activa recibe **una sola prioridad**:
+- **Contactar** (rojo): rezago o materia atrasada contra el calendario, 21 o más días sin entrar, o nunca ha entrado.
+- **Vigilar** (ámbar): ligeramente atrasada, o entre 10 y 20 días sin entrar.
+- **Al corriente** (verde): el resto. Si la carrera no tiene calendario cargado, se usa el semáforo por avance.
+
+La tabla muestra el motivo, el **ritmo** frente al corte anterior (avanzó N puntos o sin avance), el último acceso y el último contacto. Los botones de filtro (Contactar, Vigilar, Rezago, Sin avance, Sin entrar 14+ d, Por contactar, Seguimiento vencido, Bajas…) se combinan con el buscador y las tarjetas por carrera, y la lista visible se puede **copiar (correos)** o **exportar a CSV**. Los umbrales están al inicio del script (`DIAS_INACTIVIDAD_ALERTA`, `DIAS_INACTIVIDAD_CRITICA`, `TOLERANCIA_CALENDARIO`).
+
+En la ficha de cada alumna hay un resumen con **acción sugerida**, la **bitácora de contactos** (fecha, medio, nota y próximo seguimiento; se guarda en Firestore bajo `bitacora_idx` y `bitacora:<correo>` con las mismas reglas) y la **evolución por corte** de cada materia. Si cambia de correo, su bitácora se mantiene unida a su correo principal.
+
 ## Qué NO subir nunca a este repo
 - Los CSV de roster o de reportes semanales (ya están en `.gitignore`).
 - `CONTEXTO_PANEL_EUM.md` u otras notas internas que mencionen alumnas reales.

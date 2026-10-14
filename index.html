@@ -27,8 +27,11 @@
 
   --risk: #FA7165;
   --risk-soft: #FDE7E4;
+  --risk-text: #B03A2E;
   --warn: #C98A1E;
   --warn-soft: #FBF0DC;
+  --warn-text: #8A5A00;
+  --ok-text: #2F6B14;
   --baja: #8A8177;
   --baja-soft: #EBE8E3;
 
@@ -106,7 +109,7 @@
 /* ---------- global stat strip ---------- */
 #eum-app .stat-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   margin-bottom: 26px;
 }
@@ -127,7 +130,7 @@
   color: var(--ink-soft);
   margin-top: 4px;
 }
-#eum-app .stat-box.risk .num { color: var(--risk); }
+#eum-app .stat-box.risk .num { color: var(--risk-text); }
 
 /* ---------- career cards ---------- */
 #eum-app .career-grid {
@@ -147,23 +150,26 @@
 }
 #eum-app .career-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
 #eum-app .career-card.active { border-color: var(--ink); }
-#eum-app .career-card .eyebrow { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; opacity: 0.75; }
+#eum-app .career-card .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--ink-soft); }
 #eum-app .career-card h3 { font-family:'Fraunces',serif; font-size: 19px; margin: 4px 0 14px 0; font-weight: 600; }
 #eum-app .career-card .cc-row { display:flex; justify-content: space-between; align-items:baseline; font-size: 12.5px; margin-bottom: 4px;}
 #eum-app .career-card .cc-row b { font-family:'IBM Plex Mono',monospace; font-size: 14px; }
 #eum-app .career-card .bar-track { height: 6px; border-radius: 4px; background: rgba(0,0,0,0.08); margin-top: 12px; overflow:hidden; }
 #eum-app .career-card .bar-fill { height: 100%; border-radius: 4px; }
 
-#eum-app .cc-admin { background: var(--c-admin-soft); color: var(--c-admin); }
-#eum-app .cc-admin .bar-fill { background: var(--c-admin); }
-#eum-app .cc-cyf { background: var(--c-cyf-soft); color: var(--c-cyf); }
-#eum-app .cc-cyf .bar-fill { background: var(--c-cyf); }
-#eum-app .cc-mkt { background: var(--c-mkt-soft); color: var(--c-mkt); }
-#eum-app .cc-mkt .bar-fill { background: var(--c-mkt); }
-#eum-app .cc-ssc { background: var(--c-ssc-soft); color: var(--c-ssc); }
-#eum-app .cc-ssc .bar-fill { background: var(--c-ssc); }
-#eum-app .cc-tbd { background: var(--c-tbd-soft); color: var(--c-tbd); }
-#eum-app .cc-tbd .bar-fill { background: var(--c-tbd); }
+#eum-app .career-card { background: var(--paper-raised); color: var(--ink); border: 1px solid var(--line); border-top: 5px solid var(--c-tbd); }
+#eum-app .cc-admin { border-top-color: var(--c-admin); }
+#eum-app .cc-cyf { border-top-color: var(--c-cyf); }
+#eum-app .cc-mkt { border-top-color: var(--c-mkt); }
+#eum-app .cc-ssc { border-top-color: var(--c-ssc); }
+#eum-app .career-card.active { border-color: var(--ink); border-top-width: 5px; }
+#eum-app .stackbar { display:flex; height: 10px; border-radius: 6px; overflow:hidden; background: var(--paper); margin: 10px 0 8px; }
+#eum-app .stackbar span { display:block; height:100%; }
+#eum-app .stackbar .sb-rojo { background: var(--risk); }
+#eum-app .stackbar .sb-amarillo { background: var(--warn); }
+#eum-app .stackbar .sb-verde { background: var(--accent-green); }
+#eum-app .cc-big { font-size: 13px; }
+#eum-app .cc-big b { font-family:'IBM Plex Mono',monospace; font-size: 15px; }
 
 /* ---------- toolbar ---------- */
 #eum-app .toolbar {
@@ -225,21 +231,23 @@
   background: var(--paper-raised);
   border: 1px solid var(--line);
   border-radius: 12px;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: auto;
+  max-height: 74vh;
   margin-bottom: 26px;
 }
-#eum-app table.roster { width: 100%; min-width: 880px; border-collapse: collapse; font-size: 13px; }
+#eum-app table.roster { width: 100%; min-width: 860px; border-collapse: collapse; font-size: 13.5px; }
 #eum-app table.roster thead th {
   text-align: left;
   font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ink-soft);
-  padding: 10px 14px;
+  padding: 11px 14px;
   border-bottom: 1.5px solid var(--line);
   cursor: pointer;
   user-select: none;
+  position: sticky; top: 0; z-index: 2;
+  background: var(--paper-raised);
 }
 #eum-app table.roster tbody tr {
   cursor: pointer;
@@ -247,7 +255,24 @@
 }
 #eum-app table.roster tbody tr:last-child { border-bottom: none; }
 #eum-app table.roster tbody tr:hover { background: var(--paper); }
-#eum-app table.roster td { padding: 10px 14px; vertical-align: middle; }
+#eum-app table.roster td { padding: 12px 14px; vertical-align: middle; }
+#eum-app table.roster td .sub { font-size: 12px; color: var(--ink-soft); }
+#eum-app table.roster td.motivo { max-width: 300px; line-height: 1.35; }
+#eum-app table.roster tr.rojo td:first-child { box-shadow: inset 4px 0 0 var(--risk); }
+#eum-app table.roster tr.amarillo td:first-child { box-shadow: inset 4px 0 0 var(--warn); }
+#eum-app table.roster tr.verde td:first-child { box-shadow: inset 4px 0 0 var(--accent-green); }
+#eum-app .ritmo { font-family:'IBM Plex Mono',monospace; font-size: 12.5px; font-weight:600; white-space:nowrap; }
+#eum-app .ritmo.up { color: var(--ok-text); }
+#eum-app .ritmo.flat { color: var(--risk-text); }
+#eum-app .ritmo.none { color: var(--ink-soft); font-weight:400; font-family:'IBM Plex Sans',sans-serif; }
+#eum-app .venc { color: var(--risk-text); font-weight:700; }
+#eum-app .stat-box.clic { cursor:pointer; transition: transform .12s ease, box-shadow .12s ease; }
+#eum-app .stat-box.clic:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.07); }
+#eum-app .stat-box.clic.active { border-color: var(--ink); }
+#eum-app .aviso-corte { background: var(--warn-soft); color: var(--warn-text); border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px; font-weight: 600; }
+#eum-app .quick-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom: 12px; }
+#eum-app .quick-chips .chip-btn b { font-family:'IBM Plex Mono',monospace; margin-left:4px; }
+#eum-app .list-info { display:flex; gap:12px; align-items:center; flex-wrap:wrap; font-size:12.5px; color: var(--ink-soft); margin-bottom: 10px; }
 #eum-app table.roster td.name { font-weight: 600; }
 #eum-app table.roster td.name .sub { font-weight: 400; color: var(--ink-soft); font-size: 11.5px; }
 
@@ -260,8 +285,8 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-#eum-app .badge.b-activa { background: var(--accent-green-soft); color: #3E7A22; }
-#eum-app .badge.b-riesgo { background: var(--risk-soft); color: var(--risk); }
+#eum-app .badge.b-activa { background: var(--accent-green-soft); color: var(--ok-text); }
+#eum-app .badge.b-riesgo { background: var(--risk-soft); color: var(--risk-text); }
 #eum-app .badge.b-baja { background: var(--baja-soft); color: var(--baja); }
 
 #eum-app .fingerprint { display: flex; gap: 3px; }
@@ -357,7 +382,7 @@
   font-size: 12.5px;
 }
 #eum-app .tag-remove {
-  background:none; border:none; color: var(--risk); font-size: 11px; cursor:pointer; text-decoration: underline;
+  background:none; border:none; color: var(--risk-text); font-size: 11.5px; cursor:pointer; text-decoration: underline;
 }
 
 /* ---------- tabs ---------- */
@@ -380,9 +405,9 @@
 #eum-app .eum-tab-panel.active { display: block; }
 
 /* ---------- risk badges ---------- */
-#eum-app .badge.b-rojo { background: var(--risk-soft); color: var(--risk); }
-#eum-app .badge.b-amarillo { background: var(--warn-soft); color: var(--warn); }
-#eum-app .badge.b-verde { background: var(--accent-green-soft); color: #3E7A22; }
+#eum-app .badge.b-rojo { background: var(--risk-soft); color: var(--risk-text); }
+#eum-app .badge.b-amarillo { background: var(--warn-soft); color: var(--warn-text); }
+#eum-app .badge.b-verde { background: var(--accent-green-soft); color: var(--ok-text); }
 #eum-app .risk-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
 #eum-app .risk-dot.rojo { background: var(--risk); }
 #eum-app .risk-dot.amarillo { background: var(--warn); }
@@ -420,9 +445,9 @@
   padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 7px;
   font-family: 'IBM Plex Sans', sans-serif; font-size: 12.5px; background: var(--paper-raised);
 }
-#eum-app .estatus-select.st-activa { border-color: var(--accent-green); color: #3E7A22; }
+#eum-app .estatus-select.st-activa { border-color: var(--accent-green); color: var(--ok-text); }
 #eum-app .estatus-select.st-baja { border-color: var(--baja); color: var(--baja); }
-#eum-app .estatus-select.st-no_pertenece { border-color: var(--risk); color: var(--risk); }
+#eum-app .estatus-select.st-no_pertenece { border-color: var(--risk); color: var(--risk-text); }
 
 #eum-app table.admin-roster input[type=text], #eum-app table.admin-roster input[type=date] {
   padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 7px;
@@ -434,9 +459,9 @@
 #eum-app .ruta-resumen { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-bottom:12px; font-size:12.5px; color:var(--ink-soft); }
 #eum-app .ruta-strip { display:flex; align-items:stretch; gap:6px; overflow-x:auto; padding:4px 2px 10px; margin-bottom:14px; }
 #eum-app .ruta-pill { flex:0 0 auto; max-width:130px; padding:6px 9px; border-radius:8px; font-size:10.5px; font-weight:600; line-height:1.25; border:1.5px solid transparent; }
-#eum-app .ruta-pill.ok { background: var(--accent-green-soft); color:#3E7A22; }
-#eum-app .ruta-pill.warn { background: var(--warn-soft); color: var(--warn); }
-#eum-app .ruta-pill.bad { background: var(--risk-soft); color: var(--risk); }
+#eum-app .ruta-pill.ok { background: var(--accent-green-soft); color: var(--ok-text); }
+#eum-app .ruta-pill.warn { background: var(--warn-soft); color: var(--warn-text); }
+#eum-app .ruta-pill.bad { background: var(--risk-soft); color: var(--risk-text); }
 #eum-app .ruta-pill.idle { background: var(--paper); color: var(--ink-soft); border:1.5px dashed var(--line); }
 #eum-app .ruta-pill.vigente { border-color: var(--brand); }
 #eum-app .ruta-hoy { flex:0 0 auto; align-self:center; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#fff; background:var(--brand); border-radius:100px; padding:3px 8px; }
@@ -463,6 +488,14 @@
 #eum-app .rc-mark { position:absolute; top:-4px; width:3px; height:18px; background: var(--ink); border-radius:2px; }
 #eum-app .rc-nums { font-size:12px; font-family:'IBM Plex Mono',monospace; }
 #eum-app .rc-meta { font-size:11.5px; color:var(--ink-soft); margin-top:6px; }
+#eum-app .accion-box { background: var(--brand-soft); border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }
+#eum-app .bit-form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+#eum-app .bit-form input[type=text], #eum-app .bit-form input[type=date], #eum-app .bit-form select { padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 7px; font-family:'IBM Plex Sans',sans-serif; font-size: 13px; background: var(--paper-raised); }
+#eum-app .bit-form label { font-size: 11.5px; color: var(--ink-soft); display:flex; align-items:center; gap:6px; }
+#eum-app table.evo-table { width:100%; border-collapse: collapse; font-size: 12.5px; }
+#eum-app table.evo-table th { text-align:left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); padding: 6px 8px; border-bottom: 1.5px solid var(--line); white-space: nowrap; }
+#eum-app table.evo-table td { padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+#eum-app table.evo-table td.evo-n { white-space: normal; min-width: 180px; font-weight: 600; }
 #eum-app .cal-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
 #eum-app .cal-draft { background: var(--brand-soft); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; font-size: 12.5px; }
 #eum-app .cal-draft h3 { font-family:'Fraunces',serif; font-size: 16px; margin: 0 0 8px 0; }
@@ -643,42 +676,29 @@
 
   <!-- ============ TAB: SEGUIMIENTO ============ -->
   <div class="eum-tab-panel" id="eum-tab-seg">
+    <div id="eum-aviso-corte"></div>
     <div class="stat-strip" id="eum-stat-strip"></div>
     <div class="career-grid" id="eum-career-grid"></div>
 
+    <div class="quick-chips" id="eum-quick"></div>
     <div class="toolbar">
       <input type="text" id="eum-search" placeholder="Buscar alumna por nombre o correo…" />
-      <select id="eum-filter-status">
-        <option value="todas">Todos los estatus</option>
-        <option value="activa">Activas</option>
-        <option value="sin_actividad">Sin actividad (riesgo)</option>
-        <option value="baja">Bajas</option>
-      </select>
-      <select id="eum-filter-cal">
-        <option value="todas">Calendario: todas</option>
-        <option value="rezago">Rezago</option>
-        <option value="atrasada">Atrasada</option>
-        <option value="ligera">Ligeramente atrasada</option>
-        <option value="al_corriente">Al corriente</option>
-        <option value="sin_calendario">Sin calendario</option>
-      </select>
-      <button class="chip-btn" id="eum-risk-chip">⚠️ Alumnas en riesgo</button>
       <button class="chip-btn active" id="eum-clear-career" style="display:none;">✕ Quitar filtro de carrera</button>
+      <button class="chip-btn" id="eum-copy-btn" onclick="EUM.copiarCorreos()">📋 Copiar correos</button>
+      <button class="chip-btn" onclick="EUM.exportarCSV()">⬇ Exportar CSV</button>
     </div>
+    <div class="list-info" id="eum-list-info"></div>
 
     <div class="roster-wrap">
       <table class="roster">
         <thead>
           <tr>
             <th data-sort="nombre">Alumna</th>
-            <th data-sort="programa">Carrera</th>
-            <th data-sort="progreso">Progreso por materia</th>
-            <th data-sort="avg">Prom.</th>
-            <th data-sort="calif">Calif. prom.</th>
-            <th data-sort="riesgo">Atención</th>
-            <th data-sort="calendario">Calendario</th>
-            <th data-sort="estatus">Estatus</th>
-            <th data-sort="actividad">Últ. actividad</th>
+            <th data-sort="prioridad">Prioridad</th>
+            <th>Motivo</th>
+            <th data-sort="ritmo">Ritmo</th>
+            <th data-sort="actividad">Últ. acceso</th>
+            <th data-sort="contacto">Últ. contacto</th>
           </tr>
         </thead>
         <tbody id="eum-roster-body"></tbody>
@@ -731,7 +751,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · ruta de la alumna v2 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -812,12 +832,11 @@ let STATE = {
   overrides: { excluidos: {} },
   rosterMaestro: [],   // lista oficial: {matricula,nombre,email,programa,estatus,notas}
   calendario: {},      // { carrera: [ {materia, inicio:'YYYY-MM-DD', fin:'YYYY-MM-DD'} ] }
-  calFilter: 'todas',
+  quick: 'todas',
+  bitacoraIdx: {},     // { correo principal: {ultimo, n, proximo} }
   activeCareer: null,
   search: '',
-  statusFilter: 'todas',
-  riskOnly: false,
-  sortKey: 'nombre',
+  sortKey: 'prioridad',
   sortDir: 1,
   currentTab: 'admin',
 };
@@ -845,6 +864,11 @@ async function loadState(){
     const ov = await window.storage.get('overrides', false);
     if (ov && ov.value) STATE.overrides = JSON.parse(ov.value);
   } catch(e){ /* none yet */ }
+
+  try {
+    const bi = await window.storage.get('bitacora_idx', false);
+    if (bi && bi.value) STATE.bitacoraIdx = JSON.parse(bi.value);
+  } catch(e){ /* sin bitácora todavía */ }
 
   try {
     const cal = await window.storage.get('calendario', false);
@@ -1021,6 +1045,8 @@ function careerAccentVar(programa){
 
 function render(){
   document.getElementById('eum-snapshot-date').textContent = latestDate() || 'Sin cortes cargados';
+  recalcSeguimiento();
+  renderAvisoCorte();
   renderStatStrip();
   renderCareerGrid();
   renderRoster();
@@ -1041,137 +1067,341 @@ function switchTab(tab){
   render();
 }
 
+// ---------------- seguimiento: prioridad, ritmo y bitácora ----------------
+const DIAS_SIN_CONTACTO = 14;   // "por contactar": rojo/ámbar sin contacto registrado en N días
+const DIAS_AVISO_CORTE = 8;     // aviso si el último corte tiene más de N días
+const PRI_LABEL = { rojo:'Contactar', amarillo:'Vigilar', verde:'Al corriente', baja:'Baja' };
+const PRI_BADGE = { rojo:'b-rojo', amarillo:'b-amarillo', verde:'b-verde', baja:'b-baja' };
+const PRI_ORDEN = { rojo:0, amarillo:1, verde:2, baja:3 };
+const SEG = new Map();          // correo -> { ritmo, pri } (se recalcula en cada render)
+let VISIBLE_LIST = [];          // lista que se ve en la tabla (para copiar / exportar)
+
+function hoyLocal(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function diasEntre(aStr, bStr){ return Math.round((ymdToUTC(bStr) - ymdToUTC(aStr)) / DIA_MS); }
+function haceTxt(n){ return n==null ? '' : (n<=0 ? 'hoy' : (n===1 ? 'hace 1 día' : `hace ${n} días`)); }
+function nombreCorto(n, max){ n = String(n||''); max = max||30; return n.length>max ? n.slice(0,max-1)+'…' : n; }
+function listarTxt(arr){ return arr.length<=1 ? (arr[0]||'') : arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
+function diasSinActividad(a){
+  const act = lastActivity(a), corte = latestDate();
+  if (!act || !corte) return null;
+  return Math.max(0, diasEntre(act.slice(0,10), corte));
+}
+
+// Cuánto avanzó respecto al corte anterior (suma de puntos ganados en sus materias) y cuántos cortes seguidos sin avanzar.
+function ritmoAlumna(a, mapas){
+  const vacio = { estado:'sin_dato', puntos:0, cortesSinAvance:0, dias:null, detalle:[], desde:null };
+  if (mapas.length < 2) return vacio;
+  const key = canonicalEmail(a.email), n = mapas.length;
+  const ahora = mapas[n-1].m.get(key), antes = mapas[n-2].m.get(key);
+  if (!ahora || !antes) return vacio;
+  const delta = (prev, now) => {
+    let pts = 0; const det = [];
+    (now.cursos||[]).forEach(c=>{
+      const kc = materiaKey(c.curso);
+      const pc = (prev.cursos||[]).find(x=>{ const kx = materiaKey(x.curso); return mismaMateria(kc,kx) || mismaMateria(kx,kc); });
+      if (!pc) return;
+      const d = (c.progreso||0) - (pc.progreso||0);
+      if (d > 0) pts += d;
+      det.push({ materia: c.curso, antes: pc.progreso||0, ahora: c.progreso||0 });
+    });
+    return { pts, det };
+  };
+  const d0 = delta(antes, ahora);
+  const completa = (ahora.cursos||[]).length>0 && ahora.cursos.every(c=>(c.progreso||0)>=100);
+  let cortes = 0;
+  if (d0.pts <= 0){
+    cortes = 1;
+    for (let i=n-2; i>=1; i--){
+      const r1 = mapas[i].m.get(key), r0 = mapas[i-1].m.get(key);
+      if (!r1 || !r0) break;
+      if (delta(r0,r1).pts <= 0) cortes++; else break;
+    }
+  }
+  return { estado: completa ? 'completa' : (d0.pts>0 ? 'avanza' : 'estancada'), puntos: Math.round(d0.pts), cortesSinAvance: cortes, dias: diasEntre(mapas[n-2].fecha, mapas[n-1].fecha), detalle: d0.det, desde: mapas[n-2].fecha };
+}
+
+// Prioridad única de seguimiento: calendario + inactividad (ver README).
+function prioridadAlumna(a, ritmo){
+  const dias = diasSinActividad(a);
+  const cal = calendarStatus(a);
+  const facts = { nunca:false, sinConcluir:[], atrasadas:[], ligeras:[], sinMatricularVigente:[], dias };
+  if (computeStatus(a)==='baja') return { nivel:'baja', motivos:['Baja'], motivoCorto:'Baja', dias, cal, facts };
+  const motivos = [];
+  let nivel = 'verde';
+  const subir = n => { if (n==='rojo' || (n==='amarillo' && nivel==='verde')) nivel = n; };
+  if (cal){
+    cal.detalle.forEach(d=>{
+      if (d.estado==='rezagada' || d.estado==='sin_matricular') facts.sinConcluir.push({ materia:d.materia, real:d.real });
+      else if (d.estado==='atrasada') facts.atrasadas.push(d);
+      else if (d.estado==='ligera') facts.ligeras.push(d);
+      else if (d.estado==='sin_matricular_vigente') facts.sinMatricularVigente.push(d);
+    });
+    if (facts.sinConcluir.length){ subir('rojo'); motivos.push(`${facts.sinConcluir.length} ${facts.sinConcluir.length===1 ? 'materia cerrada sin concluir' : 'materias cerradas sin concluir'}`); }
+    facts.atrasadas.forEach(d=>{ subir('rojo'); motivos.push(`${nombreCorto(d.materia)}: ${Math.round(d.real)}% de ${Math.round(d.esperado)}% esperado`); });
+    facts.ligeras.forEach(d=>{ subir('amarillo'); motivos.push(`${nombreCorto(d.materia)}: ${Math.round(d.real)}% de ${Math.round(d.esperado)}% esperado (ligero atraso)`); });
+    facts.sinMatricularVigente.forEach(d=>{ motivos.push(`${nombreCorto(d.materia)}: no aparece en su reporte`); });
+  } else {
+    const r = riskLevel(a);
+    if (r==='rojo'){ subir('rojo'); motivos.push('Avance muy bajo (sin calendario cargado para su carrera)'); }
+    else if (r==='amarillo'){ subir('amarillo'); motivos.push('Avance bajo (sin calendario cargado para su carrera)'); }
+  }
+  if (dias==null){ facts.nunca = true; subir('rojo'); motivos.push('Nunca ha entrado a la plataforma'); }
+  else if (dias >= DIAS_INACTIVIDAD_CRITICA){ subir('rojo'); motivos.push(`${dias} días sin entrar`); }
+  else if (dias >= DIAS_INACTIVIDAD_ALERTA){ subir('amarillo'); motivos.push(`${dias} días sin entrar`); }
+  if (ritmo && ritmo.estado==='estancada') motivos.push(ritmo.cortesSinAvance>1 ? `Sin avance en ${ritmo.cortesSinAvance} cortes seguidos` : 'Sin avance desde el corte anterior');
+  const motivoCorto = motivos.length ? motivos.slice(0,2).join(' · ') + (motivos.length>2 ? ` · +${motivos.length-2}` : '') : (cal ? 'Al corriente con su calendario' : '—');
+  return { nivel, motivos, motivoCorto, dias, cal, facts };
+}
+
+function mapasDeCortes(){
+  return STATE.snapshotDates.slice(-7).map(d=>({ fecha:d, m:new Map(mergeByStudent(STATE.snapshots[d]||[]).map(r=>[r.email, r])) }));
+}
+function recalcSeguimiento(){
+  SEG.clear();
+  const mapas = mapasDeCortes();
+  visibleRoster().forEach(a=>{ const ritmo = ritmoAlumna(a, mapas); SEG.set(a.email, { ritmo, pri: prioridadAlumna(a, ritmo) }); });
+}
+function segDe(a){
+  let x = SEG.get(a.email);
+  if (!x){ const ritmo = ritmoAlumna(a, mapasDeCortes()); x = { ritmo, pri: prioridadAlumna(a, ritmo) }; SEG.set(a.email, x); }
+  return x;
+}
+function accionSugerida(a, seg){
+  const f = seg.pri.facts, p = [];
+  if (seg.pri.nivel==='baja') return 'Alumna dada de baja: no requiere seguimiento.';
+  if (f.nunca) p.push('Contactarla para confirmar que recibió su acceso y acordar su primera sesión en la plataforma.');
+  if (f.sinConcluir.length) p.push(`Preguntarle qué le impidió concluir ${listarTxt(f.sinConcluir.map(x=>x.materia))} y acordar una fecha para ponerse al corriente.`);
+  if (f.atrasadas.length) p.push(`Recordarle el avance que debería llevar hoy en ${listarTxt(f.atrasadas.map(d=>d.materia))} y ofrecerle apoyo.`);
+  if (f.ligeras.length && !f.atrasadas.length) p.push(`Enviarle un recordatorio amable: va ligeramente atrasada en ${listarTxt(f.ligeras.map(d=>d.materia))}.`);
+  if (f.dias!=null && f.dias >= DIAS_INACTIVIDAD_CRITICA) p.push(`Contactarla: lleva ${f.dias} días sin entrar a la plataforma.`);
+  else if (f.dias!=null && f.dias >= DIAS_INACTIVIDAD_ALERTA) p.push(`Escribirle un recordatorio: lleva ${f.dias} días sin entrar.`);
+  if (f.sinMatricularVigente.length) p.push(`Verificar con Talisis si está matriculada en ${listarTxt(f.sinMatricularVigente.map(d=>d.materia))}.`);
+  return p.length ? p.join(' ') : 'Sin acción por ahora: va al corriente con su calendario.';
+}
+
+// ---- bitácora de contactos ----
+function emailsDe(email){
+  const m = findMaestro(email);
+  return m ? [m.email].concat(m.correos_alternos||[]) : [email];
+}
+async function leerListaContactos(correo){
+  try { const r = await window.storage.get('bitacora:'+correo, false); return (r && r.value) ? JSON.parse(r.value) : []; }
+  catch(e){ return []; }
+}
+async function cargarBitacora(email){
+  let todos = [];
+  for (const e of emailsDe(email)) todos = todos.concat(await leerListaContactos(e));
+  return todos.sort((x,y)=>(y.fecha+y.creado).localeCompare(x.fecha+x.creado));
+}
+async function actualizarIdxBitacora(email){
+  const lista = await cargarBitacora(email);
+  const key = canonicalEmail(email);
+  if (!lista.length) delete STATE.bitacoraIdx[key];
+  else STATE.bitacoraIdx[key] = { ultimo: lista[0].fecha, n: lista.length, proximo: lista.find(x=>x.proximo) ? lista.find(x=>x.proximo).proximo : null };
+  try { await window.storage.set('bitacora_idx', JSON.stringify(STATE.bitacoraIdx), false); }
+  catch(e){ console.error('no se pudo guardar el índice de la bitácora', e); }
+}
+async function agregarContacto(email){
+  const val = id => (document.getElementById(id)||{}).value || '';
+  const fecha = val('eum-ct-fecha'), medio = val('eum-ct-medio'), nota = val('eum-ct-nota').trim(), proximo = val('eum-ct-prox');
+  if (!fecha || !nota){ alert('Indica la fecha y qué se habló o acordó.'); return; }
+  const principal = canonicalEmail(email);
+  const lista = await leerListaContactos(principal);
+  lista.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), fecha, medio, nota, proximo: proximo||null, autor: (auth && auth.currentUser) ? auth.currentUser.email : '', creado: new Date().toISOString() });
+  await window.storage.set('bitacora:'+principal, JSON.stringify(lista), false);
+  await actualizarIdxBitacora(email);
+  render();
+  await pintarBitacora(email);
+}
+async function borrarContacto(email, id){
+  if (!confirm('¿Borrar este registro de contacto?')) return;
+  for (const e of emailsDe(email)){
+    const lista = await leerListaContactos(e);
+    if (lista.some(x=>x.id===id)){ await window.storage.set('bitacora:'+e, JSON.stringify(lista.filter(x=>x.id!==id)), false); break; }
+  }
+  await actualizarIdxBitacora(email);
+  render();
+  await pintarBitacora(email);
+}
+async function pintarBitacora(email){
+  const el = document.getElementById('eum-bitacora-lista');
+  if (!el) return;
+  const lista = await cargarBitacora(email);
+  const safe = escAttr(email).replace(/'/g, '&#39;');
+  el.innerHTML = lista.length ? lista.map(x=>`<div class="ruta-linea" style="align-items:flex-start;">
+      <span class="rl-d" style="min-width:92px;">${x.fecha}</span>
+      <span class="badge b-baja">${escAttr(x.medio)}</span>
+      <span class="rl-n" style="font-weight:400;">${escAttr(x.nota)}${x.proximo ? `<div class="rl-d">Próximo seguimiento: ${x.proximo}</div>` : ''}${x.autor ? `<div class="rl-d">${escAttr(x.autor)}</div>` : ''}</span>
+      <button class="tag-remove" onclick="EUM.borrarContacto('${safe}','${x.id}')">borrar</button>
+    </div>`).join('') : '<p style="color:var(--ink-soft); font-size:12.5px; margin:6px 0;">Aún no hay contactos registrados con esta alumna.</p>';
+}
+
+// ---- filtros rápidos ----
+const QUICK = [
+  { id:'todas', label:'Todas', fn:()=>true },
+  { id:'rojo', label:'Contactar', fn:(a,s)=>s.pri.nivel==='rojo' },
+  { id:'amarillo', label:'Vigilar', fn:(a,s)=>s.pri.nivel==='amarillo' },
+  { id:'verde', label:'Al corriente', fn:(a,s)=>s.pri.nivel==='verde' },
+  { id:'rezago', label:'Rezago', fn:(a,s)=>!!s.pri.cal && s.pri.cal.nivel==='rezago' },
+  { id:'atrasada', label:'Atrasada', fn:(a,s)=>!!s.pri.cal && s.pri.cal.nivel==='atrasada' },
+  { id:'sin_avance', label:'Sin avance', fn:(a,s)=>s.ritmo.estado==='estancada' && s.pri.nivel!=='baja' },
+  { id:'sin_entrar', label:'Sin entrar 14+ d', fn:(a,s)=>s.pri.nivel!=='baja' && (s.pri.dias==null || s.pri.dias>=14) },
+  { id:'sin_matricular', label:'Sin matricular (en curso)', fn:(a,s)=>s.pri.facts.sinMatricularVigente.length>0 },
+  { id:'por_contactar', label:'Por contactar', fn:(a,s)=>{ if (s.pri.nivel!=='rojo' && s.pri.nivel!=='amarillo') return false; const b = STATE.bitacoraIdx[canonicalEmail(a.email)]; return !b || diasEntre(b.ultimo, hoyLocal()) >= DIAS_SIN_CONTACTO; } },
+  { id:'vencido', label:'Seguimiento vencido', fn:(a)=>{ const b = STATE.bitacoraIdx[canonicalEmail(a.email)]; return !!(b && b.proximo && b.proximo <= hoyLocal()); } },
+  { id:'baja', label:'Bajas', fn:(a,s)=>s.pri.nivel==='baja' },
+];
+function quick(id){
+  STATE.quick = (STATE.quick===id && id!=='todas') ? 'todas' : id;
+  renderStatStrip();
+  renderRoster();
+}
+
+// ---------------- rendering de Seguimiento ----------------
+function renderAvisoCorte(){
+  const el = document.getElementById('eum-aviso-corte');
+  const corte = latestDate();
+  if (!corte){ el.innerHTML = '<div class="aviso-corte">Aún no hay ningún corte cargado: sube el reporte de Talisis más reciente.</div>'; return; }
+  const edad = diasEntre(corte, hoyLocal());
+  el.innerHTML = edad > DIAS_AVISO_CORTE
+    ? `<div class="aviso-corte">⚠️ El último corte es del ${corte} (${haceTxt(edad)}). Los estados se calculan a esa fecha: sube el reporte más reciente para ver el panorama de hoy.</div>`
+    : '';
+}
+
 function renderStatStrip(){
   const roster = visibleRoster();
-  const total = roster.length;
-  const activas = roster.filter(a=>computeStatus(a)==='activa').length;
-  const enRiesgo = roster.filter(a=>{ const r=riskLevel(a); return r==='rojo'||r==='amarillo'; }).length;
-  const bajas = roster.filter(a=>computeStatus(a)==='baja').length;
-  const el = document.getElementById('eum-stat-strip');
-  el.innerHTML = `
-    <div class="stat-box"><div class="num mono">${total}</div><div class="label">Alumnas registradas</div></div>
-    <div class="stat-box"><div class="num mono" style="color:#3E7A22">${activas}</div><div class="label">Con actividad</div></div>
-    <div class="stat-box risk"><div class="num mono">${enRiesgo}</div><div class="label">A contactar / vigilar</div></div>
-    <div class="stat-box"><div class="num mono" style="color:var(--baja)">${bajas}</div><div class="label">Bajas registradas</div></div>
-  `;
+  const activas = roster.filter(a=>segDe(a).pri.nivel!=='baja');
+  const n = nivel => activas.filter(a=>segDe(a).pri.nivel===nivel).length;
+  const rojo = n('rojo'), amar = n('amarillo'), verde = n('verde');
+  const bajas = roster.length - activas.length;
+  const sinAv = activas.filter(a=>segDe(a).ritmo.estado==='estancada').length;
+  const pct = activas.length ? Math.round(100*verde/activas.length) : 0;
+  const box = (id, num, label, extra, cls) => `<div class="stat-box clic ${cls||''} ${STATE.quick===id?'active':''}" onclick="EUM.quick('${id}')"><div class="num mono">${num}</div><div class="label">${label}</div>${extra?`<div class="label" style="margin-top:2px;">${extra}</div>`:''}</div>`;
+  document.getElementById('eum-stat-strip').innerHTML =
+    box('todas', activas.length, 'Alumnas activas', bajas ? `${bajas} ${bajas===1?'baja':'bajas'}` : '') +
+    box('rojo', rojo, 'A contactar', '', 'risk') +
+    box('amarillo', amar, 'A vigilar', '') +
+    box('verde', verde, 'Al corriente', `${pct}% de las activas`) +
+    box('sin_avance', sinAv, 'Sin avance', 'vs. corte anterior');
 }
 
 function renderCareerGrid(){
   const roster = visibleRoster();
   const el = document.getElementById('eum-career-grid');
-  const groups = {};
-  CAREER_ORDER.forEach(c=>groups[c]=[]);
-  roster.forEach(a=>{
-    const p = effectivePrograma(a);
-    if (!p) return;
-    groups[p].push(a);
-  });
-  const cardsHtml = CAREER_ORDER.map(programa=>{
-    const list = groups[programa];
+  el.innerHTML = CAREER_ORDER.map(programa=>{
     const key = CAREER_KEYS[programa] || 'tbd';
-    const activas = list.filter(a=>computeStatus(a)==='activa').length;
-    const riesgo = list.filter(a=>{ const r=riskLevel(a); return r==='rojo'||r==='amarillo'; }).length;
-    const bajas = list.filter(a=>computeStatus(a)==='baja').length;
-    const avgs = list.map(avgProgreso).filter(v=>v!==null);
-    const avgAll = avgs.length ? Math.round(avgs.reduce((a,b)=>a+b,0)/avgs.length) : 0;
+    const lista = roster.filter(a=>effectivePrograma(a)===programa && segDe(a).pri.nivel!=='baja');
+    const c = nv => lista.filter(a=>segDe(a).pri.nivel===nv).length;
+    const rojo = c('rojo'), amar = c('amarillo'), verde = c('verde'), tot = lista.length || 1;
     const isActive = STATE.activeCareer===programa;
     return `<div class="career-card cc-${key} ${isActive?'active':''}" onclick="EUM.selectCareer('${programa.replace(/'/g,"\\'")}')">
-      <div class="eyebrow">${list.length} alumnas</div>
+      <div class="eyebrow">${lista.length} alumnas activas</div>
       <h3>${programa}</h3>
-      <div class="cc-row"><span>Activas</span><b>${activas}</b></div>
-      <div class="cc-row"><span>A contactar/vigilar</span><b>${riesgo}</b></div>
-      <div class="cc-row"><span>Bajas</span><b>${bajas}</b></div>
-      <div class="bar-track"><div class="bar-fill" style="width:${avgAll}%"></div></div>
-      <div class="cc-row" style="margin-top:6px;"><span>Progreso promedio</span><b>${avgAll}%</b></div>
+      <div class="stackbar" title="${rojo} a contactar · ${amar} a vigilar · ${verde} al corriente"><span class="sb-rojo" style="width:${100*rojo/tot}%"></span><span class="sb-amarillo" style="width:${100*amar/tot}%"></span><span class="sb-verde" style="width:${100*verde/tot}%"></span></div>
+      <div class="cc-big"><b>${verde}</b> de ${lista.length} al corriente (${lista.length?Math.round(100*verde/lista.length):0}%)</div>
+      <div class="cc-row" style="margin-top:6px;"><span>A contactar</span><b>${rojo}</b></div>
+      <div class="cc-row"><span>A vigilar</span><b>${amar}</b></div>
     </div>`;
   }).join('');
-  el.innerHTML = cardsHtml;
   document.getElementById('eum-clear-career').style.display = STATE.activeCareer ? 'inline-block' : 'none';
 }
 
-function fingerprint(alumna){
-  const cursos = alumna.cursos||[];
-  return `<div class="fingerprint">${cursos.map(c=>{
-    let color = 'var(--line)';
-    let title = c.curso + ': sin dato';
-    if (c.progreso !== null && c.progreso !== undefined){
-      title = c.curso + ': ' + fmtPct(c.progreso);
-      if (c.progreso === 0) color = 'var(--risk)';
-      else if (c.progreso >= 100) color = 'var(--brand)';
-      else color = 'var(--ink-soft)';
-    }
-    return `<div class="fp-seg" title="${title}" style="background:${color}; opacity:${c.progreso===0?0.35:1}"></div>`;
-  }).join('')}</div>`;
+function renderQuickChips(base){
+  document.getElementById('eum-quick').innerHTML = QUICK.map(q=>{
+    const n = base.filter(a=>q.fn(a, segDe(a))).length;
+    return `<button class="chip-btn ${STATE.quick===q.id?'active':''}" onclick="EUM.quick('${q.id}')">${q.label}<b>${n}</b></button>`;
+  }).join('');
 }
 
 function renderRoster(){
   let roster = visibleRoster();
-  if (STATE.activeCareer){
-    roster = roster.filter(a => effectivePrograma(a) === STATE.activeCareer);
-  }
-  if (STATE.statusFilter !== 'todas'){
-    roster = roster.filter(a => computeStatus(a) === STATE.statusFilter);
-  }
-  if (STATE.riskOnly){
-    roster = roster.filter(a => { const r=riskLevel(a); return r==='rojo'||r==='amarillo'; });
-  }
-  const calMap = new Map(roster.map(a=>[a.email, calendarStatus(a)]));
-  if (STATE.calFilter !== 'todas'){
-    roster = roster.filter(a => {
-      const st = calMap.get(a.email);
-      return STATE.calFilter==='sin_calendario' ? !st : (st && st.nivel===STATE.calFilter);
-    });
-  }
+  if (STATE.activeCareer) roster = roster.filter(a => effectivePrograma(a) === STATE.activeCareer);
+  renderQuickChips(roster);
+  const total = roster.length;
+  const q = QUICK.find(x=>x.id===STATE.quick) || QUICK[0];
+  roster = roster.filter(a => q.fn(a, segDe(a)));
   if (STATE.search.trim()){
-    const q = STATE.search.trim().toLowerCase();
-    roster = roster.filter(a => a.nombre.toLowerCase().includes(q) || a.email.toLowerCase().includes(q));
+    const t = STATE.search.trim().toLowerCase();
+    roster = roster.filter(a => a.nombre.toLowerCase().includes(t) || a.email.toLowerCase().includes(t));
   }
 
+  const dias = a => { const d = segDe(a).pri.dias; return d==null ? 99999 : d; };
+  const ritmoOrden = a => ({ estancada:0, avanza:1, completa:2, sin_dato:3 })[segDe(a).ritmo.estado];
+  const contactoKey = a => { const b = STATE.bitacoraIdx[canonicalEmail(a.email)]; return b ? b.ultimo : ''; };
   roster = roster.slice().sort((a,b)=>{
-    let av, bv;
-    if (STATE.sortKey==='nombre'){ av=a.nombre; bv=b.nombre; }
-    else if (STATE.sortKey==='programa'){ av=effectivePrograma(a)||'zzz'; bv=effectivePrograma(b)||'zzz'; }
-    else if (STATE.sortKey==='avg'){ av=avgProgreso(a)||0; bv=avgProgreso(b)||0; }
-    else if (STATE.sortKey==='calif'){ av=avgPorcentaje(a)||0; bv=avgPorcentaje(b)||0; }
-    else if (STATE.sortKey==='riesgo'){ av=riskOrder(riskLevel(a)); bv=riskOrder(riskLevel(b)); }
-    else if (STATE.sortKey==='calendario'){ const sa=calMap.get(a.email), sb=calMap.get(b.email); av = sa ? CAL_ORDEN[sa.nivel] : 9; bv = sb ? CAL_ORDEN[sb.nivel] : 9; }
-    else if (STATE.sortKey==='estatus'){ av=computeStatus(a); bv=computeStatus(b); }
-    else if (STATE.sortKey==='actividad'){ av=lastActivity(a)||''; bv=lastActivity(b)||''; }
-    else { av=a.nombre; bv=b.nombre; }
-    if (av<bv) return -1*STATE.sortDir;
-    if (av>bv) return 1*STATE.sortDir;
-    return 0;
+    let c = 0;
+    if (STATE.sortKey==='prioridad'){ c = PRI_ORDEN[segDe(a).pri.nivel]-PRI_ORDEN[segDe(b).pri.nivel] || dias(b)-dias(a) || a.nombre.localeCompare(b.nombre); }
+    else if (STATE.sortKey==='nombre'){ c = a.nombre.localeCompare(b.nombre); }
+    else if (STATE.sortKey==='ritmo'){ c = ritmoOrden(a)-ritmoOrden(b) || a.nombre.localeCompare(b.nombre); }
+    else if (STATE.sortKey==='actividad'){ c = dias(b)-dias(a) || a.nombre.localeCompare(b.nombre); }
+    else if (STATE.sortKey==='contacto'){ c = contactoKey(a).localeCompare(contactoKey(b)) || a.nombre.localeCompare(b.nombre); }
+    else { c = a.nombre.localeCompare(b.nombre); }
+    return c * STATE.sortDir;
   });
+  VISIBLE_LIST = roster;
+
+  const ORDEN_TXT = { prioridad:'prioridad', nombre:'nombre', ritmo:'ritmo', actividad:'último acceso', contacto:'último contacto' };
+  document.getElementById('eum-list-info').innerHTML = `<span>Mostrando <b>${roster.length}</b> de ${total} alumnas · ordenadas por ${ORDEN_TXT[STATE.sortKey]||STATE.sortKey}</span>`;
 
   const body = document.getElementById('eum-roster-body');
   const empty = document.getElementById('eum-empty');
-  if (roster.length===0){
-    body.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
+  if (roster.length===0){ body.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
+  const hoy = hoyLocal();
 
   body.innerHTML = roster.map(a=>{
-    const status = computeStatus(a);
-    const badgeClass = status==='activa' ? 'b-activa' : (status==='sin_actividad' ? 'b-riesgo' : 'b-baja');
-    const badgeLabel = status==='activa' ? 'Activa' : (status==='sin_actividad' ? 'En riesgo' : 'Baja');
-    const avg = avgProgreso(a);
-    const calif = avgPorcentaje(a);
-    const programa = effectivePrograma(a);
-    const risk = riskLevel(a);
-    return `<tr onclick="EUM.openStudent('${a.email}')">
-      <td class="name">${a.nombre}<div class="sub">${a.email}</div></td>
-      <td>${programa}</td>
-      <td>${fingerprint(a)}</td>
-      <td class="mono">${avg===null?'—':Math.round(avg)+'%'}</td>
-      <td class="mono">${calif===null?'—':Math.round(calif)+'%'}</td>
-      <td><span class="risk-dot ${risk}"></span>${riskLabel(risk)}</td>
-      <td>${(()=>{ const st = calMap.get(a.email); return st ? `<span class="badge ${CAL_BADGE[st.nivel]}" title="${escAttr(calTooltip(st))}">${CAL_LABEL[st.nivel]}</span>` : '<span style="color:var(--ink-soft);">—</span>'; })()}</td>
-      <td><span class="badge ${badgeClass}">${badgeLabel}</span></td>
-      <td class="mono" style="font-size:11.5px;">${fmtDate(lastActivity(a))}</td>
+    const s = segDe(a), pri = s.pri, r = s.ritmo;
+    const act = lastActivity(a);
+    const b = STATE.bitacoraIdx[canonicalEmail(a.email)];
+    const vence = b && b.proximo && b.proximo <= hoy;
+    const ritmoCell = r.estado==='avanza' ? `<span class="ritmo up" title="${escAttr(`Avanzó ${r.puntos} puntos desde el corte ${r.desde} (${r.dias} días)`)}">▲ +${r.puntos}</span>`
+      : (r.estado==='estancada' ? `<span class="ritmo flat" title="${escAttr(`Sin avance desde el corte ${r.desde}`)}">▬ Sin avance${r.cortesSinAvance>1?` (${r.cortesSinAvance})`:''}</span>`
+      : (r.estado==='completa' ? '<span class="ritmo none" title="Todas sus materias del reporte están al 100%">Sin pendientes</span>' : '<span class="ritmo none">—</span>'));
+    const accesoCell = pri.dias==null ? '<span class="sub">Nunca ha entrado</span>' : `<span class="mono">${fmtDate(act)}</span><div class="sub">${haceTxt(pri.dias)}</div>`;
+    const contactoCell = b ? `<span class="mono">${fmtDate(b.ultimo)}</span><div class="sub">${haceTxt(diasEntre(b.ultimo, hoy))}${vence ? ' · <span class="venc">seguimiento vencido</span>' : (b.proximo ? ' · próx. '+fmtDate(b.proximo) : '')}</div>` : '<span class="sub">Sin contacto</span>';
+    return `<tr class="${pri.nivel}" onclick="EUM.openStudent('${a.email}')">
+      <td class="name">${escAttr(a.nombre)}<div class="sub">${escAttr(effectivePrograma(a)||'')} · ${escAttr(a.email)}</div></td>
+      <td><span class="badge ${PRI_BADGE[pri.nivel]}">${PRI_LABEL[pri.nivel]}</span>${pri.cal ? `<div class="sub">${CAL_LABEL[pri.cal.nivel]}</div>` : ''}</td>
+      <td class="motivo">${escAttr(pri.motivoCorto)}</td>
+      <td>${ritmoCell}</td>
+      <td>${accesoCell}</td>
+      <td>${contactoCell}</td>
     </tr>`;
   }).join('');
+}
+
+// ---- copiar / exportar la lista visible ----
+async function copiarCorreos(){
+  const correos = [...new Set(VISIBLE_LIST.map(a=>canonicalEmail(a.email)))];
+  const btn = document.getElementById('eum-copy-btn');
+  const texto = correos.join(', ');
+  let ok = false;
+  try { await navigator.clipboard.writeText(texto); ok = true; }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = texto; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch(_){}
+    ta.remove();
+  }
+  btn.textContent = ok ? `✓ ${correos.length} correos copiados` : 'No se pudo copiar';
+  setTimeout(()=>{ btn.textContent = '📋 Copiar correos'; }, 2500);
+}
+function csvEscape(v){ v = String(v==null?'':v); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+function csvDeLista(){
+  const cab = ['Nombre','Correo','Carrera','Prioridad','Calendario','Motivo','Ritmo','Dias sin acceso','Ultimo acceso','Ultimo contacto'];
+  const filas = VISIBLE_LIST.map(a=>{
+    const s = segDe(a), act = lastActivity(a), b = STATE.bitacoraIdx[canonicalEmail(a.email)];
+    const ritmo = s.ritmo.estado==='avanza' ? `Avanzo ${s.ritmo.puntos} pts` : (s.ritmo.estado==='estancada' ? 'Sin avance' : (s.ritmo.estado==='completa' ? 'Sin pendientes' : ''));
+    return [a.nombre, canonicalEmail(a.email), effectivePrograma(a)||'', PRI_LABEL[s.pri.nivel], s.pri.cal ? CAL_LABEL[s.pri.cal.nivel] : '', s.pri.motivos.join(' | '), ritmo, s.pri.dias==null ? '' : s.pri.dias, act ? act.slice(0,10) : '', b ? b.ultimo : ''];
+  });
+  return [cab].concat(filas).map(f=>f.map(csvEscape).join(',')).join('\r\n');
+}
+function exportarCSV(){
+  const blob = new Blob([String.fromCharCode(0xFEFF) + csvDeLista()], { type:'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `seguimiento_EUM_${latestDate()||'sin_corte'}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
 
 function renderDataQuality(){
@@ -1753,13 +1983,86 @@ function renderAdminCareers(){
 
 function cssSafe(email){ return email.replace(/[^a-z0-9]/gi,'_'); }
 
+// ---------------- ficha: resumen, bitácora y evolución ----------------
+function copiarTexto(t, btn){
+  const fin = ok => { if (btn){ const o = btn.textContent; btn.textContent = ok ? '✓ copiado' : 'no se pudo'; setTimeout(()=>{ btn.textContent = o; }, 1800); } };
+  navigator.clipboard.writeText(t).then(()=>fin(true)).catch(()=>{
+    const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch(_){}
+    ta.remove(); fin(ok);
+  });
+}
+function resumenHtml(a, seg){
+  const pri = seg.pri, r = seg.ritmo, act = lastActivity(a);
+  const ritmoTxt = r.estado==='avanza' ? `▲ Avanzó ${r.puntos} puntos desde el corte ${r.desde}`
+    : (r.estado==='estancada' ? `▬ Sin avance desde el corte ${r.desde}${r.cortesSinAvance>1 ? ` (${r.cortesSinAvance} cortes seguidos)` : ''}`
+    : (r.estado==='completa' ? 'Todas sus materias del reporte están al 100%' : 'Sin corte anterior para comparar'));
+  return `<div class="hist-section" style="margin-top:0; padding-top:0; border-top:none;">
+    <h4>Resumen de seguimiento</h4>
+    <div class="ruta-resumen">
+      <span class="badge ${PRI_BADGE[pri.nivel]}">${PRI_LABEL[pri.nivel]}</span>
+      ${pri.cal ? `<span>Calendario: <b>${CAL_LABEL[pri.cal.nivel]}</b></span>` : ''}
+      <span>Último acceso: ${pri.dias==null ? 'nunca ha entrado' : `${fmtDate(act)} (${haceTxt(pri.dias)})`}</span>
+    </div>
+    <ul style="margin:6px 0 12px 18px; padding:0; font-size:13px; line-height:1.5;">${pri.motivos.map(m=>`<li>${escAttr(m)}</li>`).join('') || '<li>Sin alertas</li>'}</ul>
+    <div class="accion-box"><b>Acción sugerida:</b> ${escAttr(accionSugerida(a, seg))}</div>
+    <div class="rc-meta" style="margin-top:8px;">Ritmo: ${ritmoTxt}</div>
+  </div>`;
+}
+function bitacoraHtml(email){
+  const safe = escAttr(email).replace(/'/g, '&#39;');
+  return `<div class="hist-section">
+    <h4>Bitácora de contactos</h4>
+    <div class="bit-form">
+      <input type="date" id="eum-ct-fecha" value="${hoyLocal()}">
+      <select id="eum-ct-medio"><option>Correo</option><option>WhatsApp</option><option>Llamada</option><option>Presencial</option><option>Otro</option></select>
+      <input type="text" id="eum-ct-nota" placeholder="¿Qué se habló o acordó?" style="flex:1; min-width:200px;">
+      <label>Próximo seguimiento <input type="date" id="eum-ct-prox"></label>
+      <button class="btn-secondary" onclick="EUM.agregarContacto('${safe}')">Registrar contacto</button>
+    </div>
+    <div id="eum-bitacora-lista"><p class="rc-meta">Cargando…</p></div>
+  </div>`;
+}
+function evolucionHtml(a){
+  const fechas = STATE.snapshotDates.slice(-8);
+  if (fechas.length < 2) return `<div class="hist-section"><h4>Evolución por corte</h4><p style="color:var(--ink-soft); font-size:12.5px;">Aún no hay más de un corte cargado. En cuanto agregues el próximo reporte semanal, aquí se verá cómo avanza en cada materia.</p></div>`;
+  const key = canonicalEmail(a.email), grupos = [];
+  fechas.forEach(d=>{
+    const rec = mergeByStudent(STATE.snapshots[d]||[]).find(x=>x.email===key);
+    if (!rec) return;
+    (rec.cursos||[]).forEach(c=>{
+      const k = materiaKey(c.curso);
+      let g = grupos.find(g=>mismaMateria(k, g.key) || mismaMateria(g.key, k));
+      if (!g){ g = { key:k, nombre:c.curso, vals:{} }; grupos.push(g); }
+      g.nombre = c.curso; g.vals[d] = c.progreso==null ? 0 : c.progreso;
+    });
+  });
+  if (!grupos.length) return '';
+  const ultima = fechas[fechas.length-1];
+  grupos.sort((x,y)=>((x.vals[ultima]||0)>=100) - ((y.vals[ultima]||0)>=100) || x.nombre.localeCompare(y.nombre));
+  const anio = ultima.slice(0,4);
+  const filas = grupos.map(g=>{
+    let previo = null;
+    const celdas = fechas.map(d=>{
+      const v = g.vals[d];
+      if (v==null) return '<td class="mono" style="color:var(--ink-soft);">—</td>';
+      const sube = previo!=null && v > previo;
+      const html = `<td class="mono" ${sube ? 'style="color:var(--ok-text); font-weight:700;"' : ''}>${Math.round(v)}%${sube ? ' ▲' : ''}</td>`;
+      previo = v;
+      return html;
+    }).join('');
+    return `<tr><td class="evo-n">${escAttr(g.nombre)}</td>${celdas}</tr>`;
+  }).join('');
+  return `<div class="hist-section"><h4>Evolución por corte</h4>
+    <div style="overflow-x:auto;"><table class="evo-table"><thead><tr><th>Materia</th>${fechas.map(d=>`<th>${fmtDM(d, d.slice(0,4)!==anio)}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table></div>
+  </div>`;
+}
+
 // ---------------- modal ----------------
 function openStudent(email){
   const a = latestSnapshot().find(x=>canonicalEmail(x.email)===canonicalEmail(email));
   if (!a) return;
-  const status = computeStatus(a);
-  const badgeClass = status==='activa' ? 'b-activa' : (status==='sin_actividad' ? 'b-riesgo' : 'b-baja');
-  const badgeLabel = status==='activa' ? 'Activa' : (status==='sin_actividad' ? 'En riesgo' : 'Baja');
+  const seg = segDe(a);
   const programa = effectivePrograma(a) || 'Sin carrera confirmada';
 
   function courseCard(c){
@@ -1797,41 +2100,30 @@ function openStudent(email){
     ? rutaHtml(a, ruta, courseCard)
     : coursesHtml + `<p style="color:var(--ink-soft); font-size:12.5px;">Para ver su ruta según calendario, carga el calendario de su carrera en la pestaña "Calendario".</p>`;
 
-  // historial entre snapshots
-  let histHtml = '';
-  if (STATE.snapshotDates.length <= 1){
-    histHtml = `<div class="hist-section"><h4>Histórico</h4><p style="color:var(--ink-soft); font-size:12.5px;">Aún no hay más de un corte cargado. En cuanto agregues el próximo reporte semanal, aquí se verá la evolución de esta alumna.</p></div>`;
-  } else {
-    const courseNames = [...new Set((a.cursos||[]).map(c=>c.curso))];
-    const rows = STATE.snapshotDates.map(d=>{
-      const snap = mergeByStudent(STATE.snapshots[d]).find(x=>x.email===canonicalEmail(email));
-      if (!snap) return `<div class="hist-row"><span class="hd">${d}</span><span style="color:var(--ink-soft);">sin registro</span></div>`;
-      const summary = (snap.cursos||[]).map(c=>`${c.curso.slice(0,18)}: ${fmtPct(c.progreso)}`).join(' · ');
-      return `<div class="hist-row"><span class="hd">${d}</span><span>${summary}</span></div>`;
-    }).join('');
-    histHtml = `<div class="hist-section"><h4>Histórico por corte</h4>${rows}</div>`;
-  }
-
   const excludeBtn = isExcluded(email)
-    ? `<button class="chip-btn" onclick="EUM.unexclude('${email}'); EUM.closeModal();">Restaurar cuenta</button>`
-    : `<button class="chip-btn" onclick="EUM.exclude('${email}'); EUM.closeModal();">Marcar como prueba/staff</button>`;
+    ? `<button class="tag-remove" onclick="EUM.unexclude('${email}'); EUM.closeModal();">Restaurar cuenta</button>`
+    : `<button class="tag-remove" onclick="EUM.exclude('${email}'); EUM.closeModal();">Marcar como cuenta de prueba/staff</button>`;
 
   document.getElementById('eum-modal-root').innerHTML = `
     <div class="modal-backdrop" onclick="if(event.target===this) EUM.closeModal()">
       <div class="modal">
         <button class="close-x" onclick="EUM.closeModal()">✕</button>
         <h2 class="disp">${a.nombre}</h2>
-        <div class="modal-meta">${a.email} ${a.matricula?(' · Matrícula '+a.matricula):''}${(findMaestro(a.email)&&(findMaestro(a.email).correos_alternos||[]).length)?'<br>Otros correos: '+findMaestro(a.email).correos_alternos.join(', '):''}</div>
-        <div style="display:flex; gap:8px; margin-bottom:16px;">
-          <span class="badge ${badgeClass}">${badgeLabel}</span>
+        <div class="modal-meta"><a href="mailto:${escAttr(a.email)}" style="color:var(--accent-blue);">${escAttr(a.email)}</a> <button class="tag-remove" style="color:var(--ink-soft);" onclick="EUM.copiarTexto('${escAttr(a.email)}', this)">copiar</button> ${a.matricula?(' · Matrícula '+a.matricula):''}${(findMaestro(a.email)&&(findMaestro(a.email).correos_alternos||[]).length)?'<br>Otros correos: '+findMaestro(a.email).correos_alternos.join(', '):''}</div>
+        <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+          <span class="badge ${PRI_BADGE[seg.pri.nivel]}">${PRI_LABEL[seg.pri.nivel]}</span>
           <span class="badge" style="background:var(--paper); color:var(--ink-soft);">${programa}</span>
         </div>
+        ${resumenHtml(a, seg)}
+        ${bitacoraHtml(email)}
         ${cuerpoHtml}
-        ${histHtml}
-        <div style="margin-top:18px;">${excludeBtn}</div>
+        ${evolucionHtml(a)}
+        <div class="rc-meta" style="margin-top:16px;">Promedios de referencia: avance ${avgProgreso(a)==null ? '—' : Math.round(avgProgreso(a))+'%'} · calificación ${avgPorcentaje(a)==null ? '—' : Math.round(avgPorcentaje(a))+'%'}</div>
+        <div style="margin-top:10px;">${excludeBtn}</div>
       </div>
     </div>
   `;
+  pintarBitacora(email);
   const tira = document.querySelector('#eum-modal-root .ruta-strip');
   const marca = tira && tira.querySelector('.ruta-hoy');
   if (tira && marca) tira.scrollLeft = Math.max(0, marca.offsetLeft - tira.clientWidth/3);
@@ -1845,13 +2137,6 @@ function selectCareer(programa){
 }
 function clearCareer(){ STATE.activeCareer=null; renderCareerGrid(); renderRoster(); }
 function togglePanel(id){ document.getElementById(id).classList.toggle('open'); }
-function toggleRiskOnly(){
-  STATE.riskOnly = !STATE.riskOnly;
-  document.getElementById('eum-risk-chip').classList.toggle('active', STATE.riskOnly);
-  if (STATE.riskOnly){ STATE.sortKey='riesgo'; STATE.sortDir=1; }
-  renderRoster();
-}
-
 async function exclude(email){
   STATE.overrides.excluidos[email] = true;
   await saveOverrides();
@@ -2179,7 +2464,7 @@ function setSort(key){
 }
 
 window.EUM = {
-  selectCareer, clearCareer, togglePanel, switchTab, toggleRiskOnly,
+  selectCareer, clearCareer, togglePanel, switchTab, quick, copiarCorreos, exportarCSV, agregarContacto, borrarContacto, copiarTexto,
   exclude, unexclude, openStudent, closeModal, ingestSnapshot, setSort,
   setEstatusMaestro, reasignarCarrera, excludeFromMaestro, registrarPendiente, addManualStudent,
   deleteSnapshot, login, logout, resetPassword, importRosterCsv,
@@ -2188,12 +2473,9 @@ window.EUM = {
 };
 
 document.getElementById('eum-search').addEventListener('input', e=>{ STATE.search = e.target.value; renderRoster(); });
-document.getElementById('eum-filter-status').addEventListener('change', e=>{ STATE.statusFilter = e.target.value; renderRoster(); });
-document.getElementById('eum-filter-cal').addEventListener('change', e=>{ STATE.calFilter = e.target.value; renderRoster(); });
 document.getElementById('eum-cal-file').addEventListener('change', e=>{ if (e.target.files[0]) importarCalendarioFile(e.target.files[0]); e.target.value=''; });
 document.getElementById('eum-clear-career').addEventListener('click', clearCareer);
-document.getElementById('eum-risk-chip').addEventListener('click', toggleRiskOnly);
-document.querySelectorAll('#eum-app table.roster thead th').forEach(th=>{
+document.querySelectorAll('#eum-app table.roster thead th[data-sort]').forEach(th=>{
   th.addEventListener('click', ()=> setSort(th.getAttribute('data-sort')));
 });
 
