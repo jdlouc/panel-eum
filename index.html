@@ -373,6 +373,16 @@
   resize: vertical;
 }
 #eum-app .dq-list { font-size: 12.5px; color: var(--ink-soft); }
+#eum-app .como { font-size:13px; line-height:1.55; color: var(--ink); }
+#eum-app .como h4 { margin:16px 0 6px; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color: var(--ink-soft); }
+#eum-app .como h4:first-child { margin-top:0; }
+#eum-app .como p { margin:4px 0; }
+#eum-app .como ul { margin:4px 0 4px 18px; padding:0; }
+#eum-app .como li { margin:3px 0; }
+#eum-app .como .fila { display:flex; flex-wrap:wrap; gap:4px 14px; padding:8px 0; border-top:1px solid var(--line); }
+#eum-app .como .fila > :first-child { flex:0 0 110px; }
+#eum-app .como .fila > :last-child { flex:1 1 240px; min-width:0; }
+#eum-app .como .nota { color: var(--ink-soft); font-size:12.5px; }
 #eum-app .dq-list b { color: var(--ink); }
 #eum-app .diff-report {
   margin-top: 12px;
@@ -680,6 +690,14 @@
     <div class="stat-strip" id="eum-stat-strip"></div>
     <div class="career-grid" id="eum-career-grid"></div>
 
+    <div class="panel" id="eum-panel-como">
+      <div class="panel-head" onclick="EUM.togglePanel('eum-panel-como')">
+        <span>ℹ️ ¿Cómo se calcula el semáforo y el seguimiento?</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="panel-body como" id="eum-como-body"></div>
+    </div>
+
     <div class="quick-chips" id="eum-quick"></div>
     <div class="toolbar">
       <input type="text" id="eum-search" placeholder="Buscar alumna por nombre o correo…" />
@@ -751,7 +769,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.1 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -1047,6 +1065,7 @@ function render(){
   document.getElementById('eum-snapshot-date').textContent = latestDate() || 'Sin cortes cargados';
   recalcSeguimiento();
   renderAvisoCorte();
+  renderComoSeCalcula();
   renderStatStrip();
   renderCareerGrid();
   renderRoster();
@@ -1153,6 +1172,57 @@ function prioridadAlumna(a, ritmo){
   return { nivel, motivos, motivoCorto, dias, cal, facts };
 }
 
+function renderComoSeCalcula(){
+  const el = document.getElementById('eum-como-body'); if (!el) return;
+  const A = DIAS_INACTIVIDAD_ALERTA, C = DIAS_INACTIVIDAD_CRITICA, T = TOLERANCIA_CALENDARIO;
+  el.innerHTML = `
+    <h4>Fecha de referencia</h4>
+    <p>Todo se calcula a la fecha del <b>último corte cargado</b> (no a la fecha de hoy). Si el corte es viejo, los estados también lo son: por eso el panel avisa cuando el corte tiene más de ${DIAS_AVISO_CORTE} días.</p>
+
+    <h4>Prioridad (el semáforo)</h4>
+    <p>Cada alumna activa tiene <b>una sola prioridad</b>. Se toma la más grave de estas dos señales: <b>su avance contra el calendario</b> y <b>sus días sin entrar</b>.</p>
+    <div>
+      <div class="fila"><span><span class="badge b-rojo">Contactar</span></span><span>Cualquiera de estas: (1) tiene una materia ya cerrada que no concluyó o no aparece en su reporte; (2) una materia en curso va más de ${T} puntos por debajo de lo esperado; (3) lleva <b>${C} días o más</b> sin entrar; (4) nunca ha entrado a la plataforma.</span></div>
+      <div class="fila"><span><span class="badge b-amarillo">Vigilar</span></span><span>Si no cae en rojo y cumple alguna: una materia en curso va por debajo de lo esperado pero dentro de ${T} puntos (ligero atraso), o lleva entre <b>${A} y ${C-1} días</b> sin entrar.</span></div>
+      <div class="fila"><span><span class="badge b-verde">Al corriente</span></span><span>Todo lo demás: lleva lo esperado (o más) en sus materias en curso, no tiene materias cerradas pendientes y entró hace menos de ${A} días.</span></div>
+      <div class="fila"><span><span class="badge b-baja">Baja</span></span><span>Marcada como baja en Administración (o ausente del corte). No cuenta en los totales ni requiere seguimiento.</span></div>
+    </div>
+    <p class="nota">Si una carrera no tiene calendario cargado, el avance se mide por su promedio de progreso: menos de ${UMBRAL_PROGRESO_BAJO}% da Vigilar y todas sus materias en 0% da Contactar. Las inactividades se evalúan igual.</p>
+
+    <h4>Avance contra el calendario</h4>
+    <p>Para cada materia del calendario de su carrera se compara el <b>% de avance real</b> (de Talisis) con el <b>% esperado</b> a la fecha del corte. El esperado es lineal: si la materia dura 4 semanas y van 2, se espera 50%.</p>
+    <ul>
+      <li><b>Concluida / adelantada / al corriente:</b> real igual o mayor al esperado (o 100%). Cuentan como al corriente.</li>
+      <li><b>Lig. atrasada:</b> hasta ${T} puntos por debajo de lo esperado.</li>
+      <li><b>Atrasada:</b> más de ${T} puntos por debajo.</li>
+      <li><b>Rezago:</b> la materia ya cerró y no llegó a 100%, o ya cerró y no aparece en su reporte. Es lo más grave: siempre da Contactar.</li>
+      <li><b>Por iniciar:</b> aún no empieza; no afecta.</li>
+      <li><b>No aparece en su reporte (materia vigente):</b> puede estar por matricularse, así que <b>no cambia su color</b>, pero se muestra en el motivo y en el filtro "Sin matricular (en curso)".</li>
+    </ul>
+    <p class="nota">Todas las alumnas se evalúan con el mismo calendario, incluidas las que ingresaron tarde. El nivel de la alumna es el de su peor materia (rezago, luego atrasada, luego ligera).</p>
+
+    <h4>Días sin entrar</h4>
+    <p>Diferencia entre el último acceso registrado (el más reciente entre su último login y la última visita a cualquiera de sus materias) y la fecha del último corte.</p>
+
+    <h4>Ritmo</h4>
+    <p>Compara el último corte contra el anterior: suma los <b>puntos de avance ganados</b> en las materias que aparecen en ambos. Si suma más de cero se muestra "avanza (+N pts)"; si no, "sin avance" y se cuenta cuántos cortes seguidos lleva así. Si ya tiene todas sus materias al 100%, se marca como completa y no se considera estancada. El ritmo <b>no cambia el color</b>, solo agrega contexto al motivo.</p>
+
+    <h4>Números de arriba</h4>
+    <ul>
+      <li><b>Alumnas activas:</b> las del roster oficial que no están en baja.</li>
+      <li><b>A contactar / A vigilar / Al corriente:</b> cuántas tienen esa prioridad; el porcentaje es sobre las activas.</li>
+      <li><b>Sin avance:</b> activas que no avanzaron nada desde el corte anterior.</li>
+      <li><b>Tarjetas por carrera:</b> los mismos conteos separados por carrera.</li>
+    </ul>
+
+    <h4>Filtros rápidos</h4>
+    <ul>
+      <li><b>Sin entrar 14+ d:</b> 14 días o más sin acceso, o nunca ha entrado.</li>
+      <li><b>Por contactar:</b> está en Contactar o Vigilar y no tiene un contacto registrado en la bitácora en los últimos ${DIAS_SIN_CONTACTO} días.</li>
+      <li><b>Seguimiento vencido:</b> su "próximo seguimiento" de la bitácora ya llegó o pasó.</li>
+    </ul>
+    <p class="nota">Los umbrales (${A} y ${C} días, ${T} puntos, ${DIAS_SIN_CONTACTO} días sin contacto) están al inicio del script y se pueden ajustar.</p>`;
+}
 function mapasDeCortes(){
   return STATE.snapshotDates.slice(-7).map(d=>({ fecha:d, m:new Map(mergeByStudent(STATE.snapshots[d]||[]).map(r=>[r.email, r])) }));
 }
