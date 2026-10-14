@@ -444,6 +444,11 @@
 #eum-app .ruta-linea { display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; font-size:12.5px; padding:6px 0; border-bottom:1px dashed var(--line); }
 #eum-app .ruta-linea .rl-n { flex:1; min-width:200px; font-weight:600; }
 #eum-app .ruta-linea .rl-d { color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; font-size:11.5px; }
+#eum-app .rl-p { display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:12px; }
+#eum-app .rl-p .mini { display:inline-block; width:64px; height:7px; border-radius:4px; background: var(--paper); overflow:hidden; }
+#eum-app .rl-p .mini span { display:block; height:100%; background: var(--brand); }
+#eum-app .rl-p.corto .mini span { background: var(--risk); }
+#eum-app .rl-p.none { font-family:'IBM Plex Sans',sans-serif; font-size:11.5px; color: var(--ink-soft); }
 #eum-app details.ruta-det { margin-top:6px; }
 #eum-app details.ruta-det > summary { cursor:pointer; font-size:12px; font-weight:600; color:var(--ink-soft); margin:6px 0; }
 #eum-app .ruta-card { border:1px solid var(--line); border-left-width:4px; border-radius:10px; padding:12px 14px; margin-bottom:10px; }
@@ -726,7 +731,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · ruta de la alumna v1 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · ruta de la alumna v2 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -1467,6 +1472,15 @@ function rutaHtml(alumna, ruta, courseCard){
   const hace = d => d==null ? '' : (d<=0 ? 'hoy' : (d===1 ? 'hace 1 día' : `hace ${d} días`));
   const linea = i => `<div class="ruta-linea"><span class="rl-n">${escAttr(i.materia)}</span><span class="rl-d">${fmtVentana(i.inicio,i.fin,corte)}</span>${i.cerrada && i.calificacion ? `<span class="mono">${escAttr(i.calificacion)}</span>` : ''}${chip(i)}</div>`;
   const hayProblema = cerradas.some(i=>i.estado!=='concluida');
+  // materia cerrada: dónde se quedó (porcentaje de avance) y, si no la terminó, su última visita
+  const lineaCerrada = i => {
+    const pct = i.real==null ? null : Math.round(i.real);
+    const avance = pct==null
+      ? '<span class="rl-p none">No aparece en su reporte</span>'
+      : `<span class="rl-p ${i.estado==='concluida' ? '' : 'corto'}"><span class="mini"><span style="width:${Math.max(0,Math.min(100,pct))}%"></span></span><b>${pct}%</b></span>`;
+    const visita = (i.estado!=='concluida' && i.ultimaVisita) ? `<span class="rl-d">últ. visita ${fmtDate(i.ultimaVisita)}</span>` : '';
+    return `<div class="ruta-linea"><span class="rl-n">${escAttr(i.materia)}</span><span class="rl-d">${fmtVentana(i.inicio,i.fin,corte)}</span>${avance}${i.calificacion ? `<span class="mono">${escAttr(i.calificacion)}</span>` : ''}${chip(i)}${visita}</div>`;
+  };
 
   const tarjeta = i => {
     const real = i.real==null ? 0 : Math.max(0, Math.min(100, i.real));
@@ -1502,8 +1516,8 @@ function rutaHtml(alumna, ruta, courseCard){
     ${resto.length ? `<details class="ruta-det"><summary>Ver toda la ruta (${resto.length} materias más)</summary>${resto.map(linea).join('')}</details>` : ''}
 
     <details class="ruta-det" ${hayProblema ? 'open' : ''}>
-      <summary>Materias cerradas (${cerradas.length}) · ${concl} concluidas${hayProblema ? ' · '+(cerradas.length-concl)+' sin concluir' : ''}</summary>
-      ${cerradas.map(linea).join('') || '<p style="color:var(--ink-soft); font-size:12.5px;">Aún no cierra ninguna.</p>'}
+      <summary>Materias cerradas (${cerradas.length}) · ${concl} ${concl===1 ? 'concluida' : 'concluidas'}${hayProblema ? ' · '+(cerradas.length-concl)+' sin concluir' : ''}</summary>
+      ${cerradas.map(lineaCerrada).join('') || '<p style="color:var(--ink-soft); font-size:12.5px;">Aún no cierra ninguna.</p>'}
     </details>
 
     ${otras.length ? `<div class="ruta-sec">Otras materias en su reporte (${otras.length})</div>${otras.map(courseCard).join('')}` : ''}
