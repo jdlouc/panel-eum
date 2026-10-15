@@ -769,7 +769,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.1 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.2 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -2397,8 +2397,26 @@ let PENDING_FILE_TEXT = null;
 
 function handleCsvFile(file){
   if (!file) return;
-  document.getElementById('eum-file-name').textContent = '📄 ' + file.name;
-  readSpreadsheetFile(file, text => { PENDING_FILE_TEXT = text; });
+  const nameEl = document.getElementById('eum-file-name');
+  nameEl.textContent = '📄 ' + file.name + ' — leyendo…';
+  PENDING_FILE_TEXT = null;
+  readSpreadsheetFile(file, text => {
+    PENDING_FILE_TEXT = text;
+    nameEl.textContent = '📄 ' + file.name + ' — ' + diagnosticoReporte(text);
+  });
+}
+
+// Resumen inmediato de lo que se leyó del archivo (o por qué no se pudo leer), antes de agregarlo como corte.
+function diagnosticoReporte(text){
+  if (!text || !text.trim()) return '⚠️ No se pudo leer el contenido del archivo. Si es Excel, ábrelo y guárdalo de nuevo como .xlsx o .csv.';
+  const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
+  const header = parsed.data[0] || [];
+  const col = mapTalisisColumns(header);
+  const faltantes = ['curso','nombre1','apellido','matriculado','primer_login','ultimo_login','progreso','email'].filter(k=>col[k]===undefined);
+  if (faltantes.length) return `⚠️ No se reconocieron estas columnas: ${faltantes.join(', ')}. Encabezados que trae el archivo: ${header.map(h=>String(h||'').trim()).filter(Boolean).slice(0,16).join(' | ')}`;
+  const filas = parsed.data.slice(1).filter(r=>r && (r[col.email]||'').trim());
+  const correos = new Set(filas.map(r=>canonicalEmail((r[col.email]||'').trim().toLowerCase())));
+  return `✓ ${filas.length} filas · ${correos.size} alumnas. Indica la fecha del corte y presiona "Agregar como nuevo corte".`;
 }
 
 // El export de Talisis no siempre trae las mismas columnas en el mismo orden
