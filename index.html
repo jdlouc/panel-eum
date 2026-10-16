@@ -383,6 +383,63 @@
 #eum-app .como .fila > :first-child { flex:0 0 110px; }
 #eum-app .como .fila > :last-child { flex:1 1 240px; min-width:0; }
 #eum-app .como .nota { color: var(--ink-soft); font-size:12.5px; }
+/* ---- asistencia presencial (colores como en la hoja: verde, amarillo, morado, azul, rojo) ---- */
+#eum-app {
+  --as-a: #2E7D32; --as-r: #F1C232; --as-r-text: #4D3700; --as-j: #6A35C9; --as-f: #1F5FD6; --as-b: #C62828;
+  --as-a-soft: #E3F2DD; --as-r-soft: #FBEFC8; --as-j-soft: #EDE4FB; --as-f-soft: #E1EBFD; --as-b-soft: #FDE4E4;
+}
+#eum-app .as-estado { font-size:12.5px; color: var(--ink-soft); align-self:center; margin-left:6px; }
+#eum-app .as-nav { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+#eum-app .as-nav select { font: inherit; padding: 8px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); min-width:230px; }
+#eum-app .as-nav .chip-btn:disabled { opacity:.4; cursor:default; }
+#eum-app .as-count { display:inline-flex; gap:4px; align-items:center; padding:3px 9px; border-radius:999px; font-size:12.5px; background:var(--paper); border:1px solid var(--line); }
+#eum-app .as-count.a { background:var(--as-a-soft); color:#1F5A22; border-color:transparent; }
+#eum-app .as-count.r { background:var(--as-r-soft); color:var(--as-r-text); border-color:transparent; }
+#eum-app .as-count.j { background:var(--as-j-soft); color:#4B2394; border-color:transparent; }
+#eum-app .as-count.f { background:var(--as-f-soft); color:#174AA8; border-color:transparent; }
+#eum-app .as-count.b { background:var(--as-b-soft); color:#8E1C1C; border-color:transparent; }
+#eum-app .as-lista { background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+#eum-app .as-row { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--line); }
+#eum-app .as-row:last-child { border-bottom:none; }
+#eum-app .as-nombre { font-weight:600; min-width:200px; flex:1 1 220px; }
+#eum-app .as-nombre .sub { font-weight:400; font-size:12px; color:var(--ink-soft); }
+#eum-app .as-botones { display:flex; gap:6px; flex-wrap:wrap; }
+#eum-app .as-btn { min-width:44px; min-height:40px; padding:6px 10px; border:1.5px solid var(--line); background:#fff; color:var(--ink-soft); border-radius:8px; font: 700 13px 'IBM Plex Sans', system-ui, sans-serif; cursor:pointer; }
+#eum-app .as-btn:hover { border-color: var(--ink-soft); }
+#eum-app .as-btn .lbl { display:none; font-weight:500; margin-left:5px; font-size:12.5px; }
+@media (min-width: 900px) { #eum-app .as-btn .lbl { display:inline; } }
+#eum-app .as-btn.a.on { background:var(--as-a); border-color:var(--as-a); color:#fff; }
+#eum-app .as-btn.r.on { background:var(--as-r); border-color:var(--as-r); color:var(--as-r-text); }
+#eum-app .as-btn.j.on { background:var(--as-j); border-color:var(--as-j); color:#fff; }
+#eum-app .as-btn.f.on { background:var(--as-f); border-color:var(--as-f); color:#fff; }
+#eum-app .as-btn.b.on { background:var(--as-b); border-color:var(--as-b); color:#fff; }
+#eum-app .as-wrap { overflow:auto; max-height:72vh; background:#fff; border:1px solid var(--line); border-radius:12px; }
+#eum-app table.as-matrix { border-collapse:separate; border-spacing:3px; font-size:12.5px; }
+#eum-app table.as-matrix th, #eum-app table.as-matrix td { padding:0; text-align:center; background:#fff; }
+#eum-app table.as-matrix thead th { position:sticky; top:0; z-index:2; padding:6px 2px; }
+#eum-app table.as-matrix .as-sticky { position:sticky; left:0; z-index:1; text-align:left; padding:4px 10px 4px 8px; white-space:nowrap; font-weight:600; min-width:210px; background:#fff; }
+#eum-app table.as-matrix thead .as-sticky { z-index:3; }
+#eum-app table.as-matrix .as-fin { padding:0 8px; font-weight:600; }
+#eum-app .as-fecha { border:none; background:none; font: 600 11.5px 'IBM Plex Sans', system-ui, sans-serif; color:var(--ink-soft); cursor:pointer; padding:2px 4px; white-space:nowrap; }
+#eum-app .as-fecha:hover { color:var(--ink); text-decoration:underline; }
+#eum-app .as-cell { width:32px; height:30px; border:none; border-radius:6px; font: 700 12px 'IBM Plex Sans', system-ui, sans-serif; cursor:pointer; color:#fff; }
+#eum-app .as-cell.a { background:var(--as-a); }
+#eum-app .as-cell.r { background:var(--as-r); color:var(--as-r-text); }
+#eum-app .as-cell.j { background:var(--as-j); }
+#eum-app .as-cell.f { background:var(--as-f); }
+#eum-app .as-cell.b { background:var(--as-b); }
+#eum-app .as-cell.vacio { background:var(--paper); color:var(--ink-soft); border:1px dashed var(--line); }
+#eum-app .as-strip { display:flex; flex-wrap:wrap; gap:8px 6px; }
+#eum-app .as-chip-wrap { display:flex; flex-direction:column; align-items:center; gap:2px; }
+#eum-app .as-chip-wrap small { font-size:10.5px; color:var(--ink-soft); }
+#eum-app .as-chip { width:32px; height:30px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font: 700 12px 'IBM Plex Sans', system-ui, sans-serif; color:#fff; }
+#eum-app .as-chip.a { background:var(--as-a); }
+#eum-app .as-chip.r { background:var(--as-r); color:var(--as-r-text); }
+#eum-app .as-chip.j { background:var(--as-j); }
+#eum-app .as-chip.f { background:var(--as-f); }
+#eum-app .as-chip.b { background:var(--as-b); }
+#eum-app .as-chip.vacio { background:var(--paper); color:var(--ink-soft); border:1px dashed var(--line); }
+
 #eum-app .dq-list b { color: var(--ink); }
 #eum-app .diff-report {
   margin-top: 12px;
@@ -625,6 +682,7 @@
   <div class="eum-tabs">
     <button class="eum-tab-btn" id="eum-tabbtn-admin" onclick="EUM.switchTab('admin')">Administración</button>
     <button class="eum-tab-btn" id="eum-tabbtn-cal" onclick="EUM.switchTab('cal')">Calendario</button>
+    <button class="eum-tab-btn" id="eum-tabbtn-asist" onclick="EUM.switchTab('asist')">Asistencia</button>
     <button class="eum-tab-btn" id="eum-tabbtn-seg" onclick="EUM.switchTab('seg')">Seguimiento</button>
   </div>
 
@@ -684,6 +742,28 @@
     <div id="eum-cal-careers"></div>
   </div>
 
+  <!-- ============ TAB: ASISTENCIA ============ -->
+  <div class="eum-tab-panel" id="eum-tab-asist">
+    <p style="color:var(--ink-soft); font-size:13px; margin-top:0;">Asistencia a las clases presenciales, una sesión por semana (sábado; viernes en Contabilidad). Pasa lista con los botones: asistencia, retardo, justificado, falta o baja. Se guarda al instante y alimenta el semáforo de Seguimiento (faltas seguidas) y la ficha de cada alumna.</p>
+    <div id="eum-asist-root"></div>
+    <div class="panel" id="eum-panel-asist-import" style="margin-top:18px;">
+      <div class="panel-head" onclick="EUM.togglePanel('eum-panel-asist-import')">
+        <span>📥 Importar o exportar el historial de asistencia</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="panel-body">
+        <p style="color:var(--ink-soft); margin-top:0;">Importa un CSV con las columnas <span class="mono">Carrera, Alumna, Fecha, Estado</span> (y opcionalmente <span class="mono">Correo</span>). Estado: Asistencia, Retardo, Justificado, Falta o Baja. Las alumnas se buscan por nombre en el roster. Antes de guardar verás un borrador con lo que se importaría y lo que no se pudo ubicar.</p>
+        <div class="drop-zone" onclick="document.getElementById('eum-asist-file').click()">
+          <div>📎 Haz clic para elegir el archivo .csv</div>
+          <div class="filename" id="eum-asist-file-name"></div>
+          <input type="file" id="eum-asist-file" accept=".csv,text/csv">
+        </div>
+        <div id="eum-asist-draft"></div>
+        <div style="margin-top:12px;"><button class="btn-secondary" onclick="EUM.exportarAsistencia()">⬇ Exportar toda la asistencia (CSV)</button></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ TAB: SEGUIMIENTO ============ -->
   <div class="eum-tab-panel" id="eum-tab-seg">
     <div id="eum-aviso-corte"></div>
@@ -715,6 +795,7 @@
             <th data-sort="prioridad">Prioridad</th>
             <th>Motivo</th>
             <th data-sort="ritmo">Ritmo</th>
+            <th data-sort="asistencia">Asistencia</th>
             <th data-sort="actividad">Últ. acceso</th>
             <th data-sort="contacto">Últ. contacto</th>
           </tr>
@@ -769,7 +850,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.3 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.4 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -857,6 +938,9 @@ let STATE = {
   sortKey: 'prioridad',
   sortDir: 1,
   currentTab: 'admin',
+  asistCareer: 'Administración',
+  asistVista: 'lista',
+  asistFecha: null,
 };
 
 // ---------------- umbrales del semáforo de atención (ajustables) ----------------
@@ -898,6 +982,8 @@ async function loadState(){
     if (rm && rm.value) STATE.rosterMaestro = JSON.parse(rm.value);
     else { STATE.rosterMaestro = ROSTER_SEED.slice(); await saveRosterMaestro(); }
   } catch(e){ STATE.rosterMaestro = ROSTER_SEED.slice(); }
+
+  await cargarAsistencia();
 }
 
 async function saveOverrides(){
@@ -1063,6 +1149,7 @@ function careerAccentVar(programa){
 
 function render(){
   document.getElementById('eum-snapshot-date').textContent = latestDate() || 'Sin cortes cargados';
+  recalcAsistencia();
   recalcSeguimiento();
   renderAvisoCorte();
   renderComoSeCalcula();
@@ -1073,8 +1160,11 @@ function render(){
   renderHistorial();
   renderAdminTab();
   renderCalendario();
+  renderAsistencia();
   document.getElementById('eum-tabbtn-admin').classList.toggle('active', STATE.currentTab==='admin');
   document.getElementById('eum-tabbtn-seg').classList.toggle('active', STATE.currentTab==='seg');
+  document.getElementById('eum-tabbtn-asist').classList.toggle('active', STATE.currentTab==='asist');
+  document.getElementById('eum-tab-asist').classList.toggle('active', STATE.currentTab==='asist');
   document.getElementById('eum-tabbtn-cal').classList.toggle('active', STATE.currentTab==='cal');
   document.getElementById('eum-tab-cal').classList.toggle('active', STATE.currentTab==='cal');
   document.getElementById('eum-tab-admin').classList.toggle('active', STATE.currentTab==='admin');
@@ -1084,6 +1174,344 @@ function render(){
 function switchTab(tab){
   STATE.currentTab = tab;
   render();
+}
+
+// ---------------- asistencia a clases presenciales ----------------
+// Una sesión por semana. El día de la semana lo da la fecha de inicio (sábado, o viernes en Contabilidad).
+const ASIST_CLASES = {
+  admin: { inicio:'2026-05-16' },
+  cyf:   { inicio:'2026-05-15' },
+  mkt:   { inicio:'2026-05-16' },
+  ssc:   { inicio:'2026-05-16' },
+};
+const ASIST_FALTAS_AMARILLO = 2;   // faltas seguidas -> Vigilar
+const ASIST_FALTAS_ROJO = 3;       // faltas seguidas -> Contactar
+const ASIST_ESTADOS = { A:'Asistencia', R:'Retardo', J:'Justificado', F:'Falta', B:'Baja' };
+const ASIST_ORDEN = ['A','R','J','F','B'];
+const ASIST_LETRA = { asistencia:'A', asistio:'A', a:'A', retardo:'R', r:'R', justificado:'J', justificada:'J', j:'J', falta:'F', f:'F', baja:'B', b:'B' };
+const DIAS_CORTOS = ['dom','lun','mar','mié','jue','vie','sáb'];
+// marcas: { correo principal: { 'YYYY-MM-DD': 'A'|'R'|'J'|'F'|'B' } } · sinClase: { clave carrera: { fecha: true } }
+const ASIST = { marcas:{}, sinClase:{}, docs:[], stats:new Map(), sesiones:{} };
+let ASIST_MSG = '';
+let ASIST_COLA = Promise.resolve();
+let ASIST_DRAFT = null;
+
+function sumarDias(str, n){ return new Date(ymdToUTC(str) + n*DIA_MS).toISOString().slice(0,10); }
+function sesionesDe(ck, hasta){
+  const c = ASIST_CLASES[ck]; if (!c) return [];
+  const out = []; let d = c.inicio; hasta = hasta || hoyLocal();
+  while (d <= hasta){ out.push(d); d = sumarDias(d, 7); }
+  return out;
+}
+function fmtSesion(f){ return `${DIAS_CORTOS[new Date(ymdToUTC(f)).getUTCDay()]} ${fmtDM(f)}`; }
+
+// ---- carga y guardado (un documento por carrera y mes, para no pisarse entre quienes capturan) ----
+async function cargarAsistencia(){
+  ASIST.marcas = {}; ASIST.sinClase = {}; ASIST.docs = [];
+  let idx = [];
+  try { const r = await window.storage.get('asistencia_idx', false); if (r && r.value) idx = JSON.parse(r.value); } catch(e){ /* sin asistencia todavía */ }
+  ASIST.docs = idx;
+  for (const key of idx){
+    try {
+      const r = await window.storage.get(key, false);
+      if (!r || !r.value) continue;
+      const doc = JSON.parse(r.value), ck = key.split(':')[1];
+      Object.keys(doc.marcas||{}).forEach(f=>{
+        Object.keys(doc.marcas[f]).forEach(email=>{ (ASIST.marcas[email] = ASIST.marcas[email] || {})[f] = doc.marcas[f][email]; });
+      });
+      (doc.sin_clase||[]).forEach(f=>{ (ASIST.sinClase[ck] = ASIST.sinClase[ck] || {})[f] = true; });
+    } catch(e){ console.error('no se pudo leer', key, e); }
+  }
+}
+async function escribirDocAsistencia(ck, mes, fn){
+  const key = `asistencia:${ck}:${mes}`;
+  let doc = { marcas:{}, sin_clase:[] };
+  try { const r = await window.storage.get(key, false); if (r && r.value) doc = JSON.parse(r.value); } catch(e){}
+  doc.marcas = doc.marcas || {}; doc.sin_clase = doc.sin_clase || [];
+  fn(doc);
+  Object.keys(doc.marcas).forEach(f=>{ if (!Object.keys(doc.marcas[f]).length) delete doc.marcas[f]; });
+  await window.storage.set(key, JSON.stringify(doc), false);
+  if (!ASIST.docs.includes(key)){
+    let idx = ASIST.docs.slice();
+    try { const r = await window.storage.get('asistencia_idx', false); if (r && r.value) idx = idx.concat(JSON.parse(r.value)); } catch(e){}
+    idx.push(key);
+    ASIST.docs = Array.from(new Set(idx));
+    await window.storage.set('asistencia_idx', JSON.stringify(ASIST.docs), false);
+  }
+}
+// Los guardados se hacen de uno en uno: dos clics seguidos no se pisan entre sí.
+function guardarAsistencia(ck, mes, fn){
+  ASIST_MSG = 'Guardando…'; pintarEstadoAsistencia();
+  ASIST_COLA = ASIST_COLA.then(()=>escribirDocAsistencia(ck, mes, fn))
+    .then(()=>{ ASIST_MSG = '✓ Guardado'; pintarEstadoAsistencia(); })
+    .catch(e=>{ console.error('no se pudo guardar la asistencia', e); ASIST_MSG = '⚠️ No se pudo guardar; revisa tu conexión e inténtalo de nuevo'; pintarEstadoAsistencia(); });
+  return ASIST_COLA;
+}
+function pintarEstadoAsistencia(){ const el = document.getElementById('eum-asist-estado'); if (el) el.textContent = ASIST_MSG; }
+function marcaMem(email, fecha, e){
+  const m = ASIST.marcas[email] = ASIST.marcas[email] || {};
+  if (e) m[fecha] = e; else delete m[fecha];
+}
+
+// ---- cálculo por alumna ----
+// Solo cuentan las sesiones con al menos una marca en su carrera (una sesión sin captura no es una falta) y que no estén marcadas "sin clase".
+// % de asistencia = (asistencias + retardos) / (asistencias + retardos + faltas); el justificado no cuenta ni a favor ni en contra.
+// Faltas seguidas: faltas consecutivas contando hacia atrás; un justificado ni suma ni corta la racha; una asistencia o un retardo la corta.
+function recalcAsistencia(){
+  ASIST.stats.clear(); ASIST.sesiones = {};
+  const hoy = hoyLocal();
+  CAREER_ORDER.forEach(prog=>{
+    const ck = CAREER_KEYS[prog], sin = ASIST.sinClase[ck] || {};
+    const lista = maestroByCareer(prog);
+    const conMarca = new Set();
+    lista.forEach(m=>Object.keys(ASIST.marcas[m.email]||{}).forEach(f=>conMarca.add(f)));
+    const ses = sesionesDe(ck, hoy).filter(f=>!sin[f] && conMarca.has(f));
+    ASIST.sesiones[ck] = ses;
+    lista.forEach(m=>{
+      const mm = ASIST.marcas[m.email] || {};
+      const st = { A:0, R:0, J:0, F:0, baja:null, racha:0, ultimaFalta:null, tira:[], pct:null };
+      ses.forEach(f=>{
+        const e = mm[f] || null;
+        st.tira.push({ f, e });
+        if (!e) return;
+        if (e==='B'){ if (!st.baja) st.baja = f; return; }
+        if (st.baja) return;
+        st[e]++;
+        if (e==='F') st.ultimaFalta = f;
+      });
+      for (let i = st.tira.length-1; i >= 0; i--){
+        const e = st.tira[i].e;
+        if (!e || e==='J') continue;
+        if (e==='F') st.racha++; else break;
+      }
+      const base = st.A + st.R + st.F;
+      st.pct = base ? Math.round(100*(st.A+st.R)/base) : null;
+      ASIST.stats.set(m.email, (st.A+st.R+st.J+st.F>0 || st.baja) ? st : null);
+    });
+  });
+}
+function asistDe(email){ return ASIST.stats.get(canonicalEmail(email)) || null; }
+
+// ---- pantalla de la pestaña Asistencia ----
+function renderAsistencia(){
+  const root = document.getElementById('eum-asist-root'); if (!root) return;
+  const prog = STATE.asistCareer, ck = CAREER_KEYS[prog];
+  const sesiones = sesionesDe(ck, hoyLocal());
+  if (!STATE.asistFecha || !sesiones.includes(STATE.asistFecha)) STATE.asistFecha = sesiones.length ? sesiones[sesiones.length-1] : null;
+  const chips = CAREER_ORDER.map((p,i)=>`<button class="chip-btn ${p===prog?'active':''}" onclick="EUM.asistCarrera(${i})">${p}</button>`).join('');
+  const vistas = ['lista','historial'].map(v=>`<button class="chip-btn ${STATE.asistVista===v?'active':''}" onclick="EUM.asistVista('${v}')">${v==='lista'?'Pasar lista':'Historial'}</button>`).join('');
+  const cuerpo = STATE.asistVista==='historial' ? asistHistorialHtml(prog, ck) : asistListaHtml(prog, ck, sesiones);
+  root.innerHTML = `<div class="quick-chips">${chips}</div>
+    <div class="quick-chips">${vistas}<span id="eum-asist-estado" class="as-estado" role="status">${escAttr(ASIST_MSG)}</span></div>${cuerpo}`;
+}
+function asistListaHtml(prog, ck, sesiones){
+  const fecha = STATE.asistFecha;
+  if (!fecha) return '<div class="empty-state">Esta carrera aún no tiene sesiones.</div>';
+  const sin = !!(ASIST.sinClase[ck]||{})[fecha];
+  const roster = maestroByCareer(prog);
+  const alumnas = roster.filter(m=>m.estatus==='activa' || (ASIST.marcas[m.email]||{})[fecha]).sort((x,y)=>x.nombre.localeCompare(y.nombre));
+  const total = roster.filter(m=>m.estatus==='activa').length;
+  const cuenta = { A:0, R:0, J:0, F:0, B:0, N:0 };
+  alumnas.forEach(m=>{ const e = (ASIST.marcas[m.email]||{})[fecha], st = ASIST.stats.get(m.email); if (e) cuenta[e]++; else if (!(st && st.baja)) cuenta.N++; });
+  const marcadasEn = f => roster.filter(m=>(ASIST.marcas[m.email]||{})[f]).length;
+  const opciones = sesiones.slice().reverse().map(f=>`<option value="${f}" ${f===fecha?'selected':''}>${fmtSesion(f)} ${f.slice(0,4)} · ${marcadasEn(f)}/${total} marcadas${(ASIST.sinClase[ck]||{})[f]?' · sin clase':''}</option>`).join('');
+  const i = sesiones.indexOf(fecha);
+  const nav = `<div class="as-nav">
+    <button class="chip-btn" onclick="EUM.asistIr('${i>0?sesiones[i-1]:fecha}')" ${i<=0?'disabled':''} aria-label="Sesión anterior">‹</button>
+    <select id="eum-asist-fecha" onchange="EUM.asistIr(this.value)" aria-label="Sesión">${opciones}</select>
+    <button class="chip-btn" onclick="EUM.asistIr('${i<sesiones.length-1?sesiones[i+1]:fecha}')" ${i>=sesiones.length-1?'disabled':''} aria-label="Sesión siguiente">›</button>
+    <button class="chip-btn ${sin?'active':''}" onclick="EUM.asistSinClase()">${sin?'✓ Sesión sin clase':'Marcar sesión sin clase'}</button>
+    ${sin?'':`<button class="chip-btn" onclick="EUM.asistMarcarTodas()">Marcar asistencia a las que faltan</button>`}
+  </div>`;
+  if (sin) return nav + '<div class="empty-state">Esta sesión se marcó sin clase: no cuenta para nadie. Quita la marca si sí hubo clase.</div>';
+  const resumen = `<div class="list-info">${ASIST_ORDEN.map(k=>cuenta[k]?`<span class="as-count ${k.toLowerCase()}"><b>${cuenta[k]}</b> ${ASIST_ESTADOS[k].toLowerCase()}</span>`:'').join('')}<span class="as-count n"><b>${cuenta.N}</b> sin marcar</span></div>`;
+  const filas = alumnas.map(m=>{
+    const actual = (ASIST.marcas[m.email]||{})[fecha] || null;
+    const st = ASIST.stats.get(m.email);
+    const sub = st ? (st.baja ? 'Baja en asistencia' : `${st.pct==null?'—':st.pct+'%'} de asistencia${st.racha>=ASIST_FALTAS_AMARILLO ? ` · <span class="venc">${st.racha} faltas seguidas</span>` : ''}`) : 'Sin registros todavía';
+    const botones = ASIST_ORDEN.map(k=>`<button class="as-btn ${k.toLowerCase()} ${actual===k?'on':''}" aria-pressed="${actual===k}" data-e="${escAttr(m.email)}" onclick="EUM.asistMarcar(this.dataset.e,'${k}')" title="${ASIST_ESTADOS[k]}">${k}<span class="lbl">${ASIST_ESTADOS[k]}</span></button>`).join('');
+    return `<div class="as-row"><div class="as-nombre">${escAttr(m.nombre)}<div class="sub">${sub}</div></div><div class="as-botones">${botones}</div></div>`;
+  }).join('');
+  return nav + resumen + `<div class="as-lista">${filas || '<div class="empty-state">No hay alumnas activas registradas en esta carrera.</div>'}</div>`;
+}
+function asistHistorialHtml(prog, ck){
+  const ses = ASIST.sesiones[ck] || [];
+  if (!ses.length) return '<div class="empty-state">Todavía no hay asistencia capturada para esta carrera. Pasa lista en la vista "Pasar lista" o importa el historial.</div>';
+  const alumnas = maestroByCareer(prog).filter(m=>m.estatus==='activa' || ASIST.stats.get(m.email)).sort((x,y)=>x.nombre.localeCompare(y.nombre));
+  const anio = ses[ses.length-1].slice(0,4);
+  const cab = ses.map(f=>`<th title="${fmtSesion(f)} ${f.slice(0,4)}"><button class="as-fecha" onclick="EUM.asistIr('${f}'); EUM.asistVista('lista')">${fmtDM(f, f.slice(0,4)!==anio)}</button></th>`).join('');
+  const filas = alumnas.map(m=>{
+    const mm = ASIST.marcas[m.email] || {}, st = ASIST.stats.get(m.email);
+    const celdas = ses.map(f=>{
+      const e = mm[f];
+      return `<td>${e ? `<button class="as-cell ${e.toLowerCase()}" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${fmtSesion(f)} · ${ASIST_ESTADOS[e]}">${e}</button>` : `<button class="as-cell vacio" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${fmtSesion(f)} · sin marcar">·</button>`}</td>`;
+    }).join('');
+    const pct = st ? (st.baja ? 'Baja' : (st.pct==null ? '—' : st.pct+'%')) : '—';
+    const racha = st && !st.baja && st.racha>=ASIST_FALTAS_AMARILLO ? `<span class="venc">${st.racha}</span>` : (st && !st.baja ? '0' : '—');
+    return `<tr><th class="as-sticky" scope="row">${escAttr(m.nombre)}</th><td class="mono as-fin">${pct}</td><td class="mono as-fin">${racha}</td>${celdas}</tr>`;
+  }).join('');
+  return `<p class="rc-meta" style="margin:0 0 8px;">Haz clic en una celda para cambiar su estado (asistencia → retardo → justificado → falta → baja → vacío). Haz clic en una fecha para abrir esa sesión.</p>
+    <div class="as-wrap"><table class="as-matrix"><thead><tr><th class="as-sticky">Alumna</th><th class="as-fin">%</th><th class="as-fin" title="Faltas seguidas">F seg.</th>${cab}</tr></thead><tbody>${filas}</tbody></table></div>`;
+}
+
+// ---- acciones ----
+function asistCarrera(i){ STATE.asistCareer = CAREER_ORDER[i]; STATE.asistFecha = null; renderAsistencia(); }
+function asistVista(v){ STATE.asistVista = v; renderAsistencia(); }
+function asistIr(f){ STATE.asistFecha = f; renderAsistencia(); }
+function asistMarcar(email, e){
+  const ck = CAREER_KEYS[STATE.asistCareer], fecha = STATE.asistFecha; if (!fecha) return;
+  const nuevo = (ASIST.marcas[email]||{})[fecha] === e ? null : e;
+  marcaMem(email, fecha, nuevo);
+  recalcAsistencia(); renderAsistencia();
+  return guardarAsistencia(ck, fecha.slice(0,7), doc=>{ const d = doc.marcas[fecha] = doc.marcas[fecha] || {}; if (nuevo) d[email] = nuevo; else delete d[email]; });
+}
+function asistCiclar(email, fecha){
+  const ck = CAREER_KEYS[STATE.asistCareer];
+  const actual = (ASIST.marcas[email]||{})[fecha] || null;
+  const i = actual ? ASIST_ORDEN.indexOf(actual) : -1;
+  const nuevo = i+1 < ASIST_ORDEN.length ? ASIST_ORDEN[i+1] : null;
+  marcaMem(email, fecha, nuevo);
+  recalcAsistencia(); renderAsistencia();
+  return guardarAsistencia(ck, fecha.slice(0,7), doc=>{ const d = doc.marcas[fecha] = doc.marcas[fecha] || {}; if (nuevo) d[email] = nuevo; else delete d[email]; });
+}
+function asistMarcarTodas(){
+  const prog = STATE.asistCareer, ck = CAREER_KEYS[prog], fecha = STATE.asistFecha; if (!fecha) return;
+  const faltan = maestroByCareer(prog).filter(m=>m.estatus==='activa' && !(ASIST.marcas[m.email]||{})[fecha] && !(ASIST.stats.get(m.email)||{}).baja).map(m=>m.email);
+  if (!faltan.length) return;
+  faltan.forEach(e=>marcaMem(e, fecha, 'A'));
+  recalcAsistencia(); renderAsistencia();
+  return guardarAsistencia(ck, fecha.slice(0,7), doc=>{ const d = doc.marcas[fecha] = doc.marcas[fecha] || {}; faltan.forEach(e=>{ if (!d[e]) d[e] = 'A'; }); });
+}
+function asistSinClase(){
+  const ck = CAREER_KEYS[STATE.asistCareer], fecha = STATE.asistFecha; if (!fecha) return;
+  const sin = ASIST.sinClase[ck] = ASIST.sinClase[ck] || {};
+  const poner = !sin[fecha];
+  if (poner) sin[fecha] = true; else delete sin[fecha];
+  recalcAsistencia(); renderAsistencia();
+  return guardarAsistencia(ck, fecha.slice(0,7), doc=>{
+    const l = (doc.sin_clase||[]).filter(f=>f!==fecha);
+    if (poner) l.push(fecha);
+    doc.sin_clase = l;
+  });
+}
+
+// ---- importar historial / exportar ----
+// CSV con columnas: Carrera, Alumna, Fecha, Estado (y opcionalmente Correo). Estado: Asistencia, Retardo, Justificado, Falta o Baja.
+function nombreClave(s){ return quitarAcentos(String(s||'')).toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim(); }
+function armarBorradorAsistencia(text){
+  const out = { registros:[], sinMatch:[], ambiguas:[], futuras:0, ilegibles:0, error:null };
+  if (!text || !text.trim()){ out.error = 'No se pudo leer el archivo.'; return out; }
+  const parsed = Papa.parse(text.replace(/^﻿/, '').trim(), { skipEmptyLines:true });
+  const hdr = (parsed.data[0]||[]).map(h=>quitarAcentos(String(h||'')).toLowerCase().trim());
+  const iAl = hdr.findIndex(h=>h==='alumna' || h==='nombre'), iCo = hdr.findIndex(h=>h==='correo' || h==='email');
+  const iFe = hdr.indexOf('fecha'), iEs = hdr.indexOf('estado'), iCa = hdr.indexOf('carrera');
+  if (iFe<0 || iEs<0 || (iAl<0 && iCo<0)){ out.error = `Faltan columnas. Se necesitan Alumna (o Correo), Fecha y Estado. Encabezados que trae el archivo: ${(parsed.data[0]||[]).join(' | ')}`; return out; }
+  const porNombre = new Map();
+  STATE.rosterMaestro.forEach(m=>{ const k = nombreClave(m.nombre); if (!porNombre.has(k)) porNombre.set(k, []); porNombre.get(k).push(m); });
+  const hoy = hoyLocal(), vistoSin = new Set(), vistoAmb = new Set();
+  parsed.data.slice(1).forEach(r=>{
+    const fecha = fechaAYmd(r[iFe]), e = ASIST_LETRA[quitarAcentos(String(r[iEs]||'')).toLowerCase().trim()];
+    if (!fecha || !e){ out.ilegibles++; return; }
+    if (fecha > hoy){ out.futuras++; return; }
+    let m = null;
+    if (iCo>=0 && String(r[iCo]||'').trim()) m = findMaestro(String(r[iCo]).trim().toLowerCase());
+    if (!m && iAl>=0){
+      const nom = String(r[iAl]||'').trim(), cands = porNombre.get(nombreClave(nom)) || [];
+      const carrera = iCa>=0 ? carreraDesdeTexto(r[iCa]) : null;
+      const afines = cands.length>1 && carrera ? cands.filter(c=>c.programa===carrera) : cands;
+      if (afines.length===1) m = afines[0];
+      else if (afines.length>1){ if (!vistoAmb.has(nom)){ vistoAmb.add(nom); out.ambiguas.push(nom); } return; }
+      else { if (!vistoSin.has(nom)){ vistoSin.add(nom); out.sinMatch.push(nom); } return; }
+    }
+    if (!m){ out.ilegibles++; return; }
+    const ck = CAREER_KEYS[m.programa];
+    if (!ck){ out.ilegibles++; return; }
+    out.registros.push({ email:m.email, ck, fecha, e });
+  });
+  return out;
+}
+function renderBorradorAsistencia(){
+  const el = document.getElementById('eum-asist-draft'); if (!el) return;
+  const d = ASIST_DRAFT;
+  if (!d){ el.innerHTML = ''; return; }
+  if (d.error){ el.innerHTML = `<div class="diff-report">⚠️ ${escAttr(d.error)}</div>`; return; }
+  const alumnas = new Set(d.registros.map(r=>r.email)).size;
+  const fechas = d.registros.map(r=>r.fecha).sort();
+  const choques = d.registros.filter(r=>{ const a = (ASIST.marcas[r.email]||{})[r.fecha]; return a && a!==r.e; }).length;
+  el.innerHTML = `<div class="diff-report">
+    <b>Borrador:</b> ${d.registros.length} registros de ${alumnas} alumnas${fechas.length ? `, del ${fechas[0]} al ${fechas[fechas.length-1]}` : ''}.<br>
+    ${choques ? `${choques} registro(s) cambiarán una marca que ya existe.<br>` : ''}
+    ${d.futuras ? `${d.futuras} registro(s) con fecha futura se omitieron.<br>` : ''}
+    ${d.ilegibles ? `${d.ilegibles} fila(s) no se pudieron leer (fecha o estado inválido).<br>` : ''}
+    ${d.sinMatch.length ? `<b>${d.sinMatch.length} nombre(s) sin coincidencia en el roster</b> (no se importan): ${escAttr(d.sinMatch.slice(0,8).join(', '))}${d.sinMatch.length>8?'…':''}<br>` : ''}
+    ${d.ambiguas.length ? `<b>${d.ambiguas.length} nombre(s) repetidos en el roster</b> (no se importan): ${escAttr(d.ambiguas.slice(0,8).join(', '))}<br>` : ''}
+    <div style="margin-top:10px;"><button class="btn-primary" onclick="EUM.asistAplicarImport()" ${d.registros.length?'':'disabled'}>Aplicar</button> <button class="btn-secondary" onclick="EUM.asistDescartarImport()">Descartar</button></div>
+  </div>`;
+}
+function importarAsistenciaFile(file){
+  document.getElementById('eum-asist-file-name').textContent = '📄 ' + file.name + ' — leyendo…';
+  readSpreadsheetFile(file, text=>{
+    ASIST_DRAFT = armarBorradorAsistencia(text);
+    document.getElementById('eum-asist-file-name').textContent = '📄 ' + file.name;
+    renderBorradorAsistencia();
+  });
+}
+async function asistAplicarImport(){
+  const d = ASIST_DRAFT; if (!d || !d.registros.length) return;
+  const grupos = {};
+  d.registros.forEach(r=>{
+    marcaMem(r.email, r.fecha, r.e);
+    (grupos[r.ck+'|'+r.fecha.slice(0,7)] = grupos[r.ck+'|'+r.fecha.slice(0,7)] || []).push(r);
+  });
+  recalcAsistencia(); renderAsistencia();
+  for (const k of Object.keys(grupos)){
+    const [ck, mes] = k.split('|');
+    await guardarAsistencia(ck, mes, doc=>{ grupos[k].forEach(r=>{ (doc.marcas[r.fecha] = doc.marcas[r.fecha] || {})[r.email] = r.e; }); });
+  }
+  ASIST_MSG = `✓ Se importaron ${d.registros.length} registros`;
+  ASIST_DRAFT = null; renderBorradorAsistencia();
+  document.getElementById('eum-asist-file-name').textContent = '';
+  render();
+}
+function asistDescartarImport(){
+  ASIST_DRAFT = null; renderBorradorAsistencia();
+  document.getElementById('eum-asist-file-name').textContent = '';
+}
+function csvDeAsistencia(){
+  const filas = [['Carrera','Alumna','Correo','Fecha','Estado']];
+  CAREER_ORDER.forEach(prog=>{
+    maestroByCareer(prog).slice().sort((x,y)=>x.nombre.localeCompare(y.nombre)).forEach(m=>{
+      const mm = ASIST.marcas[m.email] || {};
+      Object.keys(mm).sort().forEach(f=>filas.push([prog, m.nombre, m.email, f, ASIST_ESTADOS[mm[f]]]));
+    });
+  });
+  return filas.map(f=>f.map(csvEscape).join(',')).join('\r\n');
+}
+function exportarAsistencia(){
+  const blob = new Blob([String.fromCharCode(0xFEFF) + csvDeAsistencia()], { type:'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `asistencia_EUM_${hoyLocal()}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+// ---- sección de la ficha de la alumna ----
+function asistenciaHtml(a){
+  const st = asistDe(a.email);
+  if (!st) return `<div class="hist-section"><h4>Asistencia a clase presencial</h4><p style="color:var(--ink-soft); font-size:12.5px; margin:0;">Todavía no hay asistencia registrada para esta alumna.</p></div>`;
+  const ult = st.tira.slice(-16);
+  const tira = ult.map(t=>`<div class="as-chip-wrap"><span class="as-chip ${t.e?t.e.toLowerCase():'vacio'}" title="${escAttr(fmtSesion(t.f)+' · '+(t.e?ASIST_ESTADOS[t.e]:'sin marcar'))}">${t.e||'·'}</span><small>${fmtDM(t.f)}</small></div>`).join('');
+  const racha = st.baja ? '' : (st.racha>=ASIST_FALTAS_AMARILLO ? `<span><b class="venc">${st.racha} faltas seguidas</b></span>` : '');
+  return `<div class="hist-section"><h4>Asistencia a clase presencial</h4>
+    <div class="ruta-resumen">
+      ${st.baja ? `<span><b>Marcada como baja en asistencia desde ${fmtDate(st.baja)}</b></span>` : `<span>Asistencia: <b>${st.pct==null?'—':st.pct+'%'}</b></span>`}
+      <span>${st.A} asistencias · ${st.R} retardos · ${st.J} justificadas · ${st.F} faltas</span>
+      ${racha}
+      ${st.ultimaFalta ? `<span>Última falta: ${fmtDate(st.ultimaFalta)}</span>` : ''}
+    </div>
+    <div class="as-strip">${tira}</div>
+  </div>`;
 }
 
 // ---------------- seguimiento: prioridad, ritmo y bitácora ----------------
@@ -1167,6 +1595,11 @@ function prioridadAlumna(a, ritmo){
   if (dias==null){ facts.nunca = true; subir('rojo'); motivos.push('Nunca ha entrado a la plataforma'); }
   else if (dias >= DIAS_INACTIVIDAD_CRITICA){ subir('rojo'); motivos.push(`${dias} días sin entrar`); }
   else if (dias >= DIAS_INACTIVIDAD_ALERTA){ subir('amarillo'); motivos.push(`${dias} días sin entrar`); }
+  const asis = asistDe(a.email);
+  facts.asistencia = asis;
+  if (asis && asis.baja) motivos.push('Marcada como baja en la lista de asistencia (confirma su estatus en Administración)');
+  else if (asis && asis.racha >= ASIST_FALTAS_ROJO){ subir('rojo'); motivos.push(`${asis.racha} faltas seguidas a clase presencial`); }
+  else if (asis && asis.racha >= ASIST_FALTAS_AMARILLO){ subir('amarillo'); motivos.push(`${asis.racha} faltas seguidas a clase presencial`); }
   if (ritmo && ritmo.estado==='estancada') motivos.push(ritmo.cortesSinAvance>1 ? `Sin avance en ${ritmo.cortesSinAvance} cortes seguidos` : 'Sin avance desde el corte anterior');
   const motivoCorto = motivos.length ? motivos.slice(0,2).join(' · ') + (motivos.length>2 ? ` · +${motivos.length-2}` : '') : (cal ? 'Al corriente con su calendario' : '—');
   return { nivel, motivos, motivoCorto, dias, cal, facts };
@@ -1207,6 +1640,14 @@ function renderComoSeCalcula(){
     <h4>Ritmo</h4>
     <p>Compara el último corte contra el anterior: suma los <b>puntos de avance ganados</b> en las materias que aparecen en ambos. Si suma más de cero se muestra "avanza (+N pts)"; si no, "sin avance" y se cuenta cuántos cortes seguidos lleva así. Si ya tiene todas sus materias al 100%, se marca como completa y no se considera estancada. El ritmo <b>no cambia el color</b>, solo agrega contexto al motivo.</p>
 
+    <h4>Asistencia a clase presencial</h4>
+    <p>Se captura en la pestaña Asistencia, una sesión por semana (sábado; viernes en Contabilidad), con cinco estados: asistencia, retardo, justificado, falta y baja. Solo cuentan las sesiones con al menos una marca en su carrera: una sesión sin captura no es una falta, y una sesión marcada "sin clase" no cuenta para nadie.</p>
+    <ul>
+      <li><b>% de asistencia:</b> (asistencias + retardos) ÷ (asistencias + retardos + faltas). El justificado no suma ni resta.</li>
+      <li><b>Faltas seguidas:</b> faltas consecutivas contando desde la sesión más reciente. Un justificado no corta la racha; una asistencia o un retardo sí.</li>
+      <li><b>Semáforo:</b> ${ASIST_FALTAS_AMARILLO} faltas seguidas dan Vigilar y ${ASIST_FALTAS_ROJO} o más dan Contactar. El porcentaje se muestra, pero no cambia el color.</li>
+    </ul>
+
     <h4>Números de arriba</h4>
     <ul>
       <li><b>Alumnas activas:</b> las del roster oficial que no están en baja.</li>
@@ -1245,6 +1686,7 @@ function accionSugerida(a, seg){
   if (f.ligeras.length && !f.atrasadas.length) p.push(`Enviarle un recordatorio amable: va ligeramente atrasada en ${listarTxt(f.ligeras.map(d=>d.materia))}.`);
   if (f.dias!=null && f.dias >= DIAS_INACTIVIDAD_CRITICA) p.push(`Contactarla: lleva ${f.dias} días sin entrar a la plataforma.`);
   else if (f.dias!=null && f.dias >= DIAS_INACTIVIDAD_ALERTA) p.push(`Escribirle un recordatorio: lleva ${f.dias} días sin entrar.`);
+  if (f.asistencia && !f.asistencia.baja && f.asistencia.racha >= ASIST_FALTAS_AMARILLO) p.push(`Preguntarle por sus ${f.asistencia.racha} faltas seguidas a la clase presencial y acordar cómo ponerse al corriente.`);
   if (f.sinMatricularVigente.length) p.push(`Verificar con Talisis si está matriculada en ${listarTxt(f.sinMatricularVigente.map(d=>d.materia))}.`);
   return p.length ? p.join(' ') : 'Sin acción por ahora: va al corriente con su calendario.';
 }
@@ -1316,6 +1758,7 @@ const QUICK = [
   { id:'atrasada', label:'Atrasada', fn:(a,s)=>!!s.pri.cal && s.pri.cal.nivel==='atrasada' },
   { id:'sin_avance', label:'Sin avance', fn:(a,s)=>s.ritmo.estado==='estancada' && s.pri.nivel!=='baja' },
   { id:'sin_entrar', label:'Sin entrar 14+ d', fn:(a,s)=>s.pri.nivel!=='baja' && (s.pri.dias==null || s.pri.dias>=14) },
+  { id:'faltas', label:'Faltas seguidas', fn:(a,s)=>{ const q = s.pri.facts.asistencia; return !!q && !q.baja && q.racha>=ASIST_FALTAS_AMARILLO; } },
   { id:'sin_matricular', label:'Sin matricular (en curso)', fn:(a,s)=>s.pri.facts.sinMatricularVigente.length>0 },
   { id:'por_contactar', label:'Por contactar', fn:(a,s)=>{ if (s.pri.nivel!=='rojo' && s.pri.nivel!=='amarillo') return false; const b = STATE.bitacoraIdx[canonicalEmail(a.email)]; return !b || diasEntre(b.ultimo, hoyLocal()) >= DIAS_SIN_CONTACTO; } },
   { id:'vencido', label:'Seguimiento vencido', fn:(a)=>{ const b = STATE.bitacoraIdx[canonicalEmail(a.email)]; return !!(b && b.proximo && b.proximo <= hoyLocal()); } },
@@ -1403,6 +1846,7 @@ function renderRoster(){
     if (STATE.sortKey==='prioridad'){ c = PRI_ORDEN[segDe(a).pri.nivel]-PRI_ORDEN[segDe(b).pri.nivel] || dias(b)-dias(a) || a.nombre.localeCompare(b.nombre); }
     else if (STATE.sortKey==='nombre'){ c = a.nombre.localeCompare(b.nombre); }
     else if (STATE.sortKey==='ritmo'){ c = ritmoOrden(a)-ritmoOrden(b) || a.nombre.localeCompare(b.nombre); }
+    else if (STATE.sortKey==='asistencia'){ const ra = x=>{ const q = segDe(x).pri.facts.asistencia; return q && !q.baja ? q.racha : -1; }, pc = x=>{ const q = segDe(x).pri.facts.asistencia; return q && q.pct!=null ? q.pct : 101; }; c = (ra(b)-ra(a)) || (pc(a)-pc(b)) || a.nombre.localeCompare(b.nombre); }
     else if (STATE.sortKey==='actividad'){ c = dias(b)-dias(a) || a.nombre.localeCompare(b.nombre); }
     else if (STATE.sortKey==='contacto'){ c = contactoKey(a).localeCompare(contactoKey(b)) || a.nombre.localeCompare(b.nombre); }
     else { c = a.nombre.localeCompare(b.nombre); }
@@ -1410,7 +1854,7 @@ function renderRoster(){
   });
   VISIBLE_LIST = roster;
 
-  const ORDEN_TXT = { prioridad:'prioridad', nombre:'nombre', ritmo:'ritmo', actividad:'último acceso', contacto:'último contacto' };
+  const ORDEN_TXT = { prioridad:'prioridad', nombre:'nombre', ritmo:'ritmo', actividad:'último acceso', contacto:'último contacto', asistencia:'faltas seguidas y % de asistencia' };
   document.getElementById('eum-list-info').innerHTML = `<span>Mostrando <b>${roster.length}</b> de ${total} alumnas · ordenadas por ${ORDEN_TXT[STATE.sortKey]||STATE.sortKey}</span>`;
 
   const body = document.getElementById('eum-roster-body');
@@ -1429,11 +1873,15 @@ function renderRoster(){
       : (r.estado==='completa' ? '<span class="ritmo none" title="Todas sus materias del reporte están al 100%">Sin pendientes</span>' : '<span class="ritmo none">—</span>'));
     const accesoCell = pri.dias==null ? '<span class="sub">Nunca ha entrado</span>' : `<span class="mono">${fmtDate(act)}</span><div class="sub">${haceTxt(pri.dias)}</div>`;
     const contactoCell = b ? `<span class="mono">${fmtDate(b.ultimo)}</span><div class="sub">${haceTxt(diasEntre(b.ultimo, hoy))}${vence ? ' · <span class="venc">seguimiento vencido</span>' : (b.proximo ? ' · próx. '+fmtDate(b.proximo) : '')}</div>` : '<span class="sub">Sin contacto</span>';
+    const as = pri.facts.asistencia;
+    const asisCell = !as ? '<span class="ritmo none">—</span>' : (as.baja ? '<span class="sub">Baja en asistencia</span>'
+      : `<span class="mono">${as.pct==null ? '—' : as.pct+'%'}</span><div class="sub">${as.racha>=ASIST_FALTAS_AMARILLO ? `<span class="venc">${as.racha} faltas seguidas</span>` : (as.F ? `${as.F} falta${as.F>1?'s':''} en total` : 'Sin faltas')}</div>`);
     return `<tr class="${pri.nivel}" onclick="EUM.openStudent('${a.email}')">
       <td class="name">${escAttr(a.nombre)}<div class="sub">${escAttr(effectivePrograma(a)||'')} · ${escAttr(a.email)}</div></td>
       <td><span class="badge ${PRI_BADGE[pri.nivel]}">${PRI_LABEL[pri.nivel]}</span>${pri.cal ? `<div class="sub">${CAL_LABEL[pri.cal.nivel]}</div>` : ''}</td>
       <td class="motivo">${escAttr(pri.motivoCorto)}</td>
       <td>${ritmoCell}</td>
+      <td>${asisCell}</td>
       <td>${accesoCell}</td>
       <td>${contactoCell}</td>
     </tr>`;
@@ -1457,11 +1905,11 @@ async function copiarCorreos(){
 }
 function csvEscape(v){ v = String(v==null?'':v); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
 function csvDeLista(){
-  const cab = ['Nombre','Correo','Carrera','Prioridad','Calendario','Motivo','Ritmo','Dias sin acceso','Ultimo acceso','Ultimo contacto'];
+  const cab = ['Nombre','Correo','Carrera','Prioridad','Calendario','Motivo','Ritmo','Dias sin acceso','Ultimo acceso','Ultimo contacto','Asistencia %','Faltas seguidas'];
   const filas = VISIBLE_LIST.map(a=>{
-    const s = segDe(a), act = lastActivity(a), b = STATE.bitacoraIdx[canonicalEmail(a.email)];
+    const s = segDe(a), act = lastActivity(a), b = STATE.bitacoraIdx[canonicalEmail(a.email)], as = s.pri.facts.asistencia;
     const ritmo = s.ritmo.estado==='avanza' ? `Avanzo ${s.ritmo.puntos} pts` : (s.ritmo.estado==='estancada' ? 'Sin avance' : (s.ritmo.estado==='completa' ? 'Sin pendientes' : ''));
-    return [a.nombre, canonicalEmail(a.email), effectivePrograma(a)||'', PRI_LABEL[s.pri.nivel], s.pri.cal ? CAL_LABEL[s.pri.cal.nivel] : '', s.pri.motivos.join(' | '), ritmo, s.pri.dias==null ? '' : s.pri.dias, act ? act.slice(0,10) : '', b ? b.ultimo : ''];
+    return [a.nombre, canonicalEmail(a.email), effectivePrograma(a)||'', PRI_LABEL[s.pri.nivel], s.pri.cal ? CAL_LABEL[s.pri.cal.nivel] : '', s.pri.motivos.join(' | '), ritmo, s.pri.dias==null ? '' : s.pri.dias, act ? act.slice(0,10) : '', b ? b.ultimo : '', as && as.pct!=null ? as.pct : '', as && !as.baja ? as.racha : ''];
   });
   return [cab].concat(filas).map(f=>f.map(csvEscape).join(',')).join('\r\n');
 }
@@ -2185,6 +2633,7 @@ function openStudent(email){
           <span class="badge" style="background:var(--paper); color:var(--ink-soft);">${programa}</span>
         </div>
         ${resumenHtml(a, seg)}
+        ${asistenciaHtml(a)}
         ${bitacoraHtml(email)}
         ${cuerpoHtml}
         ${evolucionHtml(a)}
@@ -2557,11 +3006,13 @@ window.EUM = {
   setEstatusMaestro, reasignarCarrera, excludeFromMaestro, registrarPendiente, addManualStudent,
   deleteSnapshot, login, logout, resetPassword, importRosterCsv,
   agregarCorreoAlterno, quitarCorreoAlterno, vincularPendiente,
+  asistCarrera, asistVista, asistIr, asistMarcar, asistCiclar, asistMarcarTodas, asistSinClase, asistAplicarImport, asistDescartarImport, exportarAsistencia,
   editarCal, agregarMateriaCal, borrarMateriaCal, aplicarCalDraft, descartarCalDraft,
 };
 
 document.getElementById('eum-search').addEventListener('input', e=>{ STATE.search = e.target.value; renderRoster(); });
 document.getElementById('eum-cal-file').addEventListener('change', e=>{ if (e.target.files[0]) importarCalendarioFile(e.target.files[0]); e.target.value=''; });
+document.getElementById('eum-asist-file').addEventListener('change', e=>{ if (e.target.files[0]) importarAsistenciaFile(e.target.files[0]); e.target.value=''; });
 document.getElementById('eum-clear-career').addEventListener('click', clearCareer);
 document.querySelectorAll('#eum-app table.roster thead th[data-sort]').forEach(th=>{
   th.addEventListener('click', ()=> setSort(th.getAttribute('data-sort')));
