@@ -52,13 +52,13 @@ La tabla muestra el motivo, el **ritmo** frente al corte anterior (avanzó N pun
 En la ficha de cada alumna hay un resumen con **acción sugerida**, la **bitácora de contactos** (fecha, medio, nota y próximo seguimiento; se guarda en Firestore bajo `bitacora_idx` y `bitacora:<correo>` con las mismas reglas) y la **evolución por corte** de cada materia. Si cambia de correo, su bitácora se mantiene unida a su correo principal.
 
 ### 7. Asistencia a clases presenciales
-La pestaña **Asistencia** registra la asistencia física de cada alumna, una sesión por semana (sábado; viernes en Contabilidad). En **Pasar lista** eliges carrera y sesión y marcas **asistencia, retardo, justificado, falta o baja**; se guarda al instante. **Historial** muestra la matriz alumna × sesión (clic en una celda para cambiarla). También se puede marcar una sesión como "sin clase" (no cuenta para nadie).
+La pestaña **Asistencia** registra la asistencia física de cada alumna a sus clases presenciales. Cada carrera tiene **su propia lista de días de clase**, cada uno con su materia (vista **Días de clase y materias**: agregar un día o repetirlo cada semana hasta una fecha, asignar materia a un rango de días, cambiar la materia de un día o quitarlo). En **Pasar lista** eliges carrera y día y marcas **asistencia, retardo, justificado, falta o baja**; se guarda al instante. **Historial** muestra la matriz alumna × día agrupada por materia (clic en una celda para cambiarla). También se puede marcar un día como "sin clase" (no cuenta para nadie). La primera vez, la lista de cada carrera se siembra con su calendario semanal (sábados; viernes en Contabilidad; sin el 31 de octubre en las de sábado) y de ahí se edita.
 
 - **% de asistencia** = (asistencias + retardos) ÷ (asistencias + retardos + faltas); el justificado no suma ni resta. Solo cuentan las sesiones con al menos una marca en su carrera.
 - **Faltas seguidas**: consecutivas desde la sesión más reciente; el justificado no corta la racha. `ASIST_FALTAS_AMARILLO` (2, Vigilar) y `ASIST_FALTAS_ROJO` (3, Contactar) están al inicio del bloque de asistencia en el script, junto con `ASIST_CLASES` (fecha de la primera sesión de cada carrera).
 - Aparece en la tabla de Seguimiento (columna Asistencia y filtro Faltas seguidas), en el semáforo y en la ficha de cada alumna.
-- **Importar historial**: CSV con columnas `Carrera, Alumna, Fecha, Estado` (opcional `Correo`); las alumnas se buscan por nombre en el roster y se muestra un borrador antes de guardar. **Exportar** genera el mismo formato.
-- Se guarda en Firestore como `asistencia_idx` y `asistencia:<carrera>:<AAAA-MM>` (un documento por carrera y mes), con las mismas reglas de acceso.
+- **Importar historial**: CSV con columnas `Carrera, Alumna, Fecha, Estado` (opcionales `Correo` y `Materia`); las alumnas se buscan por nombre en el roster y se muestra un borrador antes de guardar. **Exportar** genera el mismo formato.
+- Se guarda en Firestore como `asistencia_sesiones` (días de clase y materias de cada carrera), `asistencia_idx` y `asistencia:<carrera>:<AAAA-MM>` (un documento por carrera y mes), con las mismas reglas de acceso.
 
 ## Qué NO subir nunca a este repo
 - Los CSV de roster o de reportes semanales (ya están en `.gitignore`).
