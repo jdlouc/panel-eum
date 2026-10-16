@@ -451,6 +451,31 @@
 #eum-app table.as-dias td input { width:100%; min-width:240px; }
 #eum-app table.as-dias tr.as-futura td { color:var(--ink-soft); }
 #eum-app th.as-grupo { font: 600 11px 'IBM Plex Sans', system-ui, sans-serif; color:var(--brand); background:var(--brand-soft); border-radius:6px; padding:3px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
+#eum-app .rs-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 28px; align-items:start; }
+#eum-app .rs-stack { display:flex; height:16px; border-radius:8px; overflow:hidden; background:var(--paper); margin-bottom:10px; }
+#eum-app .rs-stack span { display:block; height:100%; }
+#eum-app .rs-stack .a { background:var(--as-a); } #eum-app .rs-stack .r { background:var(--as-r); }
+#eum-app .rs-stack .j { background:var(--as-j); } #eum-app .rs-stack .f { background:var(--as-f); }
+#eum-app .rs-barras { display:flex; gap:6px; overflow-x:auto; padding:6px 2px 4px; align-items:flex-end; }
+#eum-app .rs-barra { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:38px; }
+#eum-app .rs-col { width:26px; height:130px; background:var(--paper); border-radius:6px; display:flex; align-items:flex-end; overflow:hidden; }
+#eum-app .rs-col i { display:block; width:100%; border-radius:6px 6px 0 0; }
+#eum-app .rs-barra small { font-size:10.5px; color:var(--ink-soft); white-space:nowrap; }
+#eum-app .rs-val { font: 600 11px 'IBM Plex Mono', monospace; color:var(--ink); }
+#eum-app .rs-col i.ok, #eum-app .rs-pista i.ok, #eum-app .rs-leyenda.ok { background:var(--as-a); }
+#eum-app .rs-col i.med, #eum-app .rs-pista i.med, #eum-app .rs-leyenda.med { background:var(--as-r); }
+#eum-app .rs-col i.bajo, #eum-app .rs-pista i.bajo, #eum-app .rs-leyenda.bajo { background:var(--risk); }
+#eum-app .rs-col i.nd { background:var(--line); }
+#eum-app .rs-leyenda { display:inline-block; width:10px; height:10px; border-radius:3px; vertical-align:middle; margin-right:2px; }
+#eum-app .rs-fila { display:flex; align-items:center; gap:10px; margin-bottom:7px; font-size:13px; }
+#eum-app .rs-txt { width:104px; color:var(--ink-soft); flex:0 0 auto; }
+#eum-app .rs-pista { flex:1; height:12px; background:var(--paper); border-radius:6px; overflow:hidden; }
+#eum-app .rs-pista i { display:block; height:100%; }
+#eum-app .as-pct { display:inline-block; padding:1px 8px; border-radius:999px; font-weight:600; }
+#eum-app .as-pct.ok { background:var(--as-a-soft); color:#1F5A22; }
+#eum-app .as-pct.med { background:var(--as-r-soft); color:var(--as-r-text); }
+#eum-app .as-pct.bajo { background:var(--risk-soft); color:var(--risk-text); }
+#eum-app .as-pct.nd { background:var(--paper); color:var(--ink-soft); }
 
 #eum-app .dq-list b { color: var(--ink); }
 #eum-app .diff-report {
@@ -862,7 +887,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.5 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.6 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -950,8 +975,8 @@ let STATE = {
   sortKey: 'prioridad',
   sortDir: 1,
   currentTab: 'admin',
-  asistCareer: 'Administración',
-  asistVista: 'lista',
+  asistCareer: null,          // null = todas las carreras (solo en la vista Resumen)
+  asistVista: 'resumen',
   asistFecha: null,
 };
 
@@ -1344,14 +1369,15 @@ function asistDe(email){ return ASIST.stats.get(canonicalEmail(email)) || null; 
 // ---- pantalla de la pestaña Asistencia ----
 function renderAsistencia(){
   const root = document.getElementById('eum-asist-root'); if (!root) return;
-  const prog = STATE.asistCareer, ck = CAREER_KEYS[prog];
-  const sesiones = sesionesDe(ck, hoyLocal());
-  if (!STATE.asistFecha || !sesiones.includes(STATE.asistFecha)) STATE.asistFecha = sesiones.length ? sesiones[sesiones.length-1] : null;
-  const chips = CAREER_ORDER.map((p,i)=>`<button class="chip-btn ${p===prog?'active':''}" onclick="EUM.asistCarrera(${i})">${p}</button>`).join('');
-  const NOMBRE_VISTA = { lista:'Pasar lista', historial:'Historial', dias:'Días de clase y materias' };
-  const vistas = ['lista','historial','dias'].map(v=>`<button class="chip-btn ${STATE.asistVista===v?'active':''}" onclick="EUM.asistVista('${v}')">${NOMBRE_VISTA[v]}</button>`).join('');
-  const cuerpo = STATE.asistVista==='historial' ? asistHistorialHtml(prog, ck) : (STATE.asistVista==='dias' ? asistDiasHtml(prog, ck) : asistListaHtml(prog, ck, sesiones));
-  const materias = Array.from(new Set((STATE.calendario[prog]||[]).map(x=>x.materia).concat((ASIST.cfg[ck]||[]).map(x=>x.m).filter(Boolean)))).sort();
+  if (!STATE.asistCareer && STATE.asistVista!=='resumen') STATE.asistCareer = CAREER_ORDER[0];
+  const prog = STATE.asistCareer, ck = prog ? CAREER_KEYS[prog] : null;
+  const sesiones = ck ? sesionesDe(ck, hoyLocal()) : [];
+  if (ck && (!STATE.asistFecha || !sesiones.includes(STATE.asistFecha))) STATE.asistFecha = sesiones.length ? sesiones[sesiones.length-1] : null;
+  const chips = `<button class="chip-btn ${!prog?'active':''}" onclick="EUM.asistCarrera(-1)">Todas</button>` + CAREER_ORDER.map((p,i)=>`<button class="chip-btn ${p===prog?'active':''}" onclick="EUM.asistCarrera(${i})">${p}</button>`).join('');
+  const NOMBRE_VISTA = { resumen:'Resumen', lista:'Pasar lista', historial:'Historial', dias:'Días de clase y materias' };
+  const vistas = ['resumen','lista','historial','dias'].map(v=>`<button class="chip-btn ${STATE.asistVista===v?'active':''}" onclick="EUM.asistVista('${v}')">${NOMBRE_VISTA[v]}</button>`).join('');
+  const cuerpo = STATE.asistVista==='resumen' ? asistResumenHtml(prog) : (STATE.asistVista==='historial' ? asistHistorialHtml(prog, ck) : (STATE.asistVista==='dias' ? asistDiasHtml(prog, ck) : asistListaHtml(prog, ck, sesiones)));
+  const materias = ck ? Array.from(new Set((STATE.calendario[prog]||[]).map(x=>x.materia).concat((ASIST.cfg[ck]||[]).map(x=>x.m).filter(Boolean)))).sort() : [];
   const datalist = `<datalist id="eum-asist-materias">${materias.map(m=>`<option value="${escAttr(m)}"></option>`).join('')}</datalist>`;
   root.innerHTML = `<div class="quick-chips">${chips}</div>
     <div class="quick-chips">${vistas}<span id="eum-asist-estado" class="as-estado" role="status">${escAttr(ASIST_MSG)}</span></div>${datalist}${cuerpo}`;
@@ -1408,6 +1434,109 @@ function asistHistorialHtml(prog, ck){
   }).join('');
   return `<p class="rc-meta" style="margin:0 0 8px;">Haz clic en una celda para cambiar su estado (asistencia → retardo → justificado → falta → baja → vacío). Haz clic en una fecha para abrir esa sesión.</p>
     <div class="as-wrap"><table class="as-matrix"><thead>${filaMaterias}<tr><th class="as-sticky">Alumna</th><th class="as-fin">%</th><th class="as-fin" title="Faltas seguidas">F seg.</th>${cab}</tr></thead><tbody>${filas}</tbody></table></div>`;
+}
+
+// ---- resumen estadístico ----
+// Los totales cuentan solo alumnas que no están en baja; la tendencia cuenta lo que pasó ese día (incluye a quien después causó baja).
+// % = (asistencias + retardos) / (asistencias + retardos + faltas); el justificado no cuenta.
+function pctDe(a, r, f){ const b = a + r + f; return b ? Math.round(100*(a+r)/b) : null; }
+function claseBarra(p){ return p==null ? 'nd' : (p>=85 ? 'ok' : (p>=70 ? 'med' : 'bajo')); }
+function asistResumenHtml(prog){
+  const progs = prog ? [prog] : CAREER_ORDER;
+  const alumnas = [];
+  progs.forEach(p=>maestroByCareer(p).forEach(m=>{ const st = ASIST.stats.get(m.email); if (st) alumnas.push({ m, st, prog:p }); }));
+  if (!alumnas.length) return '<div class="empty-state">Todavía no hay asistencia capturada. Pasa lista en la vista "Pasar lista" o importa el historial.</div>';
+  const activas = alumnas.filter(x=>!x.st.baja);
+  const T = { A:0, R:0, J:0, F:0 };
+  activas.forEach(x=>['A','R','J','F'].forEach(k=>{ T[k] += x.st[k]; }));
+  const total = T.A + T.R + T.J + T.F, pctGlobal = pctDe(T.A, T.R, T.F);
+  const conRacha = activas.filter(x=>x.st.racha>=ASIST_FALTAS_AMARILLO).length, rojas = activas.filter(x=>x.st.racha>=ASIST_FALTAS_ROJO).length;
+  const bajas = alumnas.filter(x=>x.st.baja).length;
+
+  // tendencia semanal (las carreras tienen días distintos: se agrupa por semana) y por materia
+  const semanas = {}, materias = {}, sesPorCarrera = [];
+  progs.forEach(p=>{
+    const ck = CAREER_KEYS[p], ses = ASIST.sesiones[ck] || [], roster = maestroByCareer(p);
+    sesPorCarrera.push(ses.length);
+    ses.forEach(f=>{
+      const c = { A:0, R:0, J:0, F:0 };
+      roster.forEach(m=>{ const e = (ASIST.marcas[m.email]||{})[f]; if (e && c[e]!==undefined) c[e]++; });
+      const t = ymdToUTC(f), lunes = new Date(t - ((new Date(t).getUTCDay()+6)%7)*DIA_MS).toISOString().slice(0,10);
+      const w = semanas[lunes] = semanas[lunes] || { A:0, R:0, F:0, ultima:f };
+      w.A += c.A; w.R += c.R; w.F += c.F; if (f > w.ultima) w.ultima = f;
+      const mt = materiaDeSesion(ck, f) || 'Sin materia asignada', k = p + '|' + mt;
+      const g = materias[k] = materias[k] || { prog:p, materia:mt, ses:0, A:0, R:0, J:0, F:0, primera:f };
+      g.ses++; g.A += c.A; g.R += c.R; g.J += c.J; g.F += c.F;
+    });
+  });
+  const barras = Object.keys(semanas).sort().map(k=>{ const w = semanas[k]; return { f:w.ultima, pct:pctDe(w.A, w.R, w.F), n:w.A+w.R+w.F }; });
+  const ult = barras[barras.length-1];
+  const sMin = Math.min.apply(null, sesPorCarrera), sMax = Math.max.apply(null, sesPorCarrera);
+  const sesTxt = sMin===sMax ? String(sMin) : sMin+'–'+sMax;
+
+  const box = (num, label, extra, cls) => `<div class="stat-box ${cls||''}"><div class="num mono">${num}</div><div class="label">${label}</div>${extra?`<div class="label" style="margin-top:2px;">${extra}</div>`:''}</div>`;
+  const kpis = `<div class="stat-strip" style="margin-bottom:18px;">
+    ${box(pctGlobal==null?'—':pctGlobal+'%', 'Asistencia global', `${total} marcas · ${activas.length} alumnas`)}
+    ${box(sesTxt, 'Sesiones con registro', prog ? '' : 'por carrera')}
+    ${box(conRacha, `Con ${ASIST_FALTAS_AMARILLO}+ faltas seguidas`, rojas ? `${rojas} con ${ASIST_FALTAS_ROJO} o más` : '', conRacha ? 'risk' : '')}
+    ${box(bajas, 'Bajas en asistencia', '')}
+    ${box(ult && ult.pct!=null ? ult.pct+'%' : '—', 'Última sesión', ult ? fmtDM(ult.f, true) : '')}
+  </div>`;
+
+  // distribución de marcas
+  const pc = k => total ? (100*T[k]/total) : 0;
+  const distribucion = `<div class="hist-section" style="margin-top:0;"><h4>Cómo se reparten las marcas</h4>
+    <div class="rs-stack" role="img" aria-label="Distribución de marcas de asistencia">${['A','R','J','F'].map(k=>`<span class="${k.toLowerCase()}" style="width:${pc(k)}%" title="${ASIST_ESTADOS[k]}: ${T[k]}"></span>`).join('')}</div>
+    <div class="list-info">${['A','R','J','F'].map(k=>`<span class="as-count ${k.toLowerCase()}"><b>${T[k]}</b> ${ASIST_ESTADOS[k].toLowerCase()} · ${Math.round(pc(k))}%</span>`).join('')}</div>
+  </div>`;
+
+  // tendencia
+  const tendencia = `<div class="hist-section"><h4>Asistencia por semana</h4>
+    <div class="rs-barras">${barras.map(b=>`<div class="rs-barra" title="${escAttr(`Semana del ${fmtSesion(b.f)}: ${b.pct==null?'—':b.pct+'%'} (${b.n} alumnas con marca)`)}"><span class="rs-val">${b.pct==null?'—':b.pct+'%'}</span><div class="rs-col"><i class="${claseBarra(b.pct)}" style="height:${b.pct||0}%"></i></div><small>${fmtDM(b.f)}</small></div>`).join('')}</div>
+    <p class="rc-meta" style="margin:8px 0 0;"><span class="rs-leyenda ok"></span> 85% o más · <span class="rs-leyenda med"></span> 70 a 84% · <span class="rs-leyenda bajo"></span> menos de 70%. Cada barra es una semana (en Contabilidad la clase es viernes y en las demás sábado).</p>
+  </div>`;
+
+  // alumnas por rango de asistencia
+  const rangos = [['90% o más', x=>x>=90, 'ok'], ['80 a 89%', x=>x>=80&&x<90, 'ok'], ['70 a 79%', x=>x>=70&&x<80, 'med'], ['Menos de 70%', x=>x<70, 'bajo']];
+  const conPct = activas.filter(x=>x.st.pct!=null);
+  const filasRango = rangos.map(([txt, fn, cls])=>{ const n = conPct.filter(x=>fn(x.st.pct)).length; return `<div class="rs-fila"><span class="rs-txt">${txt}</span><div class="rs-pista"><i class="${cls}" style="width:${conPct.length ? 100*n/conPct.length : 0}%"></i></div><b class="mono">${n}</b></div>`; }).join('');
+  const porRango = `<div class="hist-section"><h4>Alumnas por porcentaje de asistencia</h4>${filasRango}</div>`;
+
+  // por carrera
+  const filasCarrera = progs.map(p=>{
+    const al = activas.filter(x=>x.prog===p), t = { A:0, R:0, F:0 };
+    al.forEach(x=>{ t.A += x.st.A; t.R += x.st.R; t.F += x.st.F; });
+    const pp = pctDe(t.A, t.R, t.F), cls = claseBarra(pp);
+    return `<tr><td class="evo-n">${p}</td><td class="mono">${al.length}</td><td class="mono"><span class="as-pct ${cls}">${pp==null?'—':pp+'%'}</span></td><td class="mono">${al.filter(x=>x.st.racha>=ASIST_FALTAS_AMARILLO).length}</td><td class="mono">${alumnas.filter(x=>x.prog===p && x.st.baja).length}</td></tr>`;
+  }).join('');
+  const porCarrera = prog ? '' : `<div class="hist-section"><h4>Por carrera</h4><div style="overflow-x:auto;"><table class="evo-table"><thead><tr><th>Carrera</th><th>Alumnas</th><th>Asistencia</th><th>${ASIST_FALTAS_AMARILLO}+ faltas seguidas</th><th>Bajas</th></tr></thead><tbody>${filasCarrera}</tbody></table></div></div>`;
+
+  // por materia
+  const lm = Object.keys(materias).map(k=>materias[k]).sort((x,y)=>CAREER_ORDER.indexOf(x.prog)-CAREER_ORDER.indexOf(y.prog) || x.primera.localeCompare(y.primera));
+  const hayMaterias = lm.some(g=>g.materia!=='Sin materia asignada');
+  const filasMateria = lm.map(g=>{ const pp = pctDe(g.A, g.R, g.F); return `<tr>${prog?'':`<td>${g.prog}</td>`}<td class="evo-n">${escAttr(g.materia)}</td><td class="mono">${g.ses}</td><td class="mono"><span class="as-pct ${claseBarra(pp)}">${pp==null?'—':pp+'%'}</span></td><td class="mono">${g.F}</td></tr>`; }).join('');
+  const porMateria = `<div class="hist-section"><h4>Por materia</h4>${hayMaterias ? `<div style="overflow-x:auto;"><table class="evo-table"><thead><tr>${prog?'':'<th>Carrera</th>'}<th>Materia</th><th>Sesiones</th><th>Asistencia</th><th>Faltas</th></tr></thead><tbody>${filasMateria}</tbody></table></div>` : '<p style="color:var(--ink-soft); font-size:12.5px; margin:0;">Aún no hay materias asignadas a los días de clase. Asígnalas en la vista "Días de clase y materias" y aquí verás la asistencia de cada una.</p>'}</div>`;
+
+  // alumnas que requieren atención
+  const atencion = activas.filter(x=>x.st.racha>=ASIST_FALTAS_AMARILLO || (x.st.pct!=null && x.st.pct<70))
+    .sort((x,y)=>y.st.racha-x.st.racha || (x.st.pct==null?101:x.st.pct)-(y.st.pct==null?101:y.st.pct) || x.m.nombre.localeCompare(y.m.nombre)).slice(0, 15);
+  const filasAt = atencion.map(x=>`<tr onclick="EUM.openStudent('${escAttr(x.m.email)}')" style="cursor:pointer;"><td class="evo-n">${escAttr(x.m.nombre)}<div class="sub" style="font-size:11.5px; color:var(--ink-soft);">${x.prog}</div></td><td class="mono"><span class="as-pct ${claseBarra(x.st.pct)}">${x.st.pct==null?'—':x.st.pct+'%'}</span></td><td class="mono">${x.st.F}</td><td class="mono">${x.st.racha>=ASIST_FALTAS_AMARILLO ? `<span class="venc">${x.st.racha}</span>` : x.st.racha}</td><td class="mono">${x.st.ultimaFalta ? fmtDM(x.st.ultimaFalta, true) : '—'}</td></tr>`).join('');
+  const lista = `<div class="hist-section"><h4>Alumnas que requieren atención</h4>${atencion.length ? `<div style="overflow-x:auto;"><table class="evo-table"><thead><tr><th>Alumna</th><th>Asistencia</th><th>Faltas</th><th>Seguidas</th><th>Última falta</th></tr></thead><tbody>${filasAt}</tbody></table></div><p class="rc-meta" style="margin:8px 0 0;">Con ${ASIST_FALTAS_AMARILLO} o más faltas seguidas, o menos de 70% de asistencia. Haz clic en una alumna para abrir su ficha.</p>` : '<p style="color:var(--ink-soft); font-size:12.5px; margin:0;">Ninguna alumna tiene faltas seguidas ni menos de 70% de asistencia.</p>'}</div>`;
+
+  return kpis + `<div class="rs-grid"><div>${distribucion}${tendencia}</div><div>${porRango}${porCarrera}${porMateria}</div></div>` + lista +
+    `<div style="margin-top:14px;"><button class="btn-secondary" onclick="EUM.exportarResumenAsistencia()">⬇ Exportar resumen por alumna (CSV)</button></div>`;
+}
+function exportarResumenAsistencia(){
+  const filas = [['Carrera','Alumna','Correo','Asistencias','Retardos','Justificadas','Faltas','% asistencia','Faltas seguidas','Baja en asistencia desde']];
+  CAREER_ORDER.forEach(p=>maestroByCareer(p).slice().sort((x,y)=>x.nombre.localeCompare(y.nombre)).forEach(m=>{
+    const st = ASIST.stats.get(m.email); if (!st) return;
+    filas.push([p, m.nombre, m.email, st.A, st.R, st.J, st.F, st.pct==null?'':st.pct, st.baja?'':st.racha, st.baja||'']);
+  }));
+  const blob = new Blob([String.fromCharCode(0xFEFF) + filas.map(f=>f.map(csvEscape).join(',')).join('\r\n')], { type:'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = `resumen_asistencia_EUM_${hoyLocal()}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
 }
 
 function asistDiasHtml(prog, ck){
@@ -1476,8 +1605,8 @@ function sesBorrar(f){
   if (emails.length || habiaSin) guardarAsistencia(ck, f.slice(0,7), doc=>{ delete doc.marcas[f]; doc.sin_clase = (doc.sin_clase||[]).filter(x=>x!==f); });
   aplicarCfg(cfg=>{ cfg[ck] = cfg[ck].filter(s=>s.f!==f); });
 }
-function asistCarrera(i){ STATE.asistCareer = CAREER_ORDER[i]; STATE.asistFecha = null; renderAsistencia(); }
-function asistVista(v){ STATE.asistVista = v; renderAsistencia(); }
+function asistCarrera(i){ if (i < 0){ STATE.asistCareer = null; STATE.asistVista = 'resumen'; } else STATE.asistCareer = CAREER_ORDER[i]; STATE.asistFecha = null; renderAsistencia(); }
+function asistVista(v){ STATE.asistVista = v; if (v!=='resumen' && !STATE.asistCareer) STATE.asistCareer = CAREER_ORDER[0]; renderAsistencia(); }
 function asistIr(f){ STATE.asistFecha = f; renderAsistencia(); }
 function asistMarcar(email, e){
   const ck = CAREER_KEYS[STATE.asistCareer], fecha = STATE.asistFecha; if (!fecha) return;
@@ -1771,6 +1900,7 @@ function renderComoSeCalcula(){
     <ul>
       <li><b>% de asistencia:</b> (asistencias + retardos) ÷ (asistencias + retardos + faltas). El justificado no suma ni resta.</li>
       <li><b>Faltas seguidas:</b> faltas consecutivas contando desde la sesión más reciente. Un justificado no corta la racha; una asistencia o un retardo sí.</li>
+      <li><b>Resumen:</b> la vista Resumen de la pestaña Asistencia muestra el % global, la tendencia semanal, la distribución por rangos, la comparación por carrera y por materia, y las alumnas que requieren atención (con ${ASIST_FALTAS_AMARILLO} o más faltas seguidas o menos de 70%). Cuenta solo alumnas que no están en baja.</li>
       <li><b>Semáforo:</b> ${ASIST_FALTAS_AMARILLO} faltas seguidas dan Vigilar y ${ASIST_FALTAS_ROJO} o más dan Contactar. El porcentaje se muestra, pero no cambia el color.</li>
     </ul>
 
@@ -3132,7 +3262,7 @@ window.EUM = {
   setEstatusMaestro, reasignarCarrera, excludeFromMaestro, registrarPendiente, addManualStudent,
   deleteSnapshot, login, logout, resetPassword, importRosterCsv,
   agregarCorreoAlterno, quitarCorreoAlterno, vincularPendiente,
-  asistCarrera, asistVista, asistIr, asistMarcar, asistCiclar, asistMarcarTodas, asistSinClase, asistAplicarImport, asistDescartarImport, exportarAsistencia, sesAgregar, sesAsignar, sesMateria, sesBorrar,
+  asistCarrera, asistVista, asistIr, asistMarcar, asistCiclar, asistMarcarTodas, asistSinClase, asistAplicarImport, asistDescartarImport, exportarAsistencia, sesAgregar, sesAsignar, sesMateria, sesBorrar, exportarResumenAsistencia,
   editarCal, agregarMateriaCal, borrarMateriaCal, aplicarCalDraft, descartarCalDraft,
 };
 
