@@ -769,7 +769,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.2 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.3 (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -861,9 +861,9 @@ let STATE = {
 
 // ---------------- umbrales del semáforo de atención (ajustables) ----------------
 const DIAS_INACTIVIDAD_ALERTA = 10;   // sin acceso >= N días -> amarillo
-const DIAS_INACTIVIDAD_CRITICA = 21;  // sin acceso >= N días -> rojo
+const DIAS_INACTIVIDAD_CRITICA = 15;  // sin acceso >= N días -> rojo
 const UMBRAL_PROGRESO_BAJO = 30;      // promedio de progreso < N% (y > 0) -> amarillo
-const TOLERANCIA_CALENDARIO = 20;     // puntos de avance por debajo de lo esperado que se consideran 'ligeramente atrasada'
+const TOLERANCIA_CALENDARIO = 50;     // puntos de avance por debajo de lo esperado que se consideran 'ligeramente atrasada'
 
 // ---------------- storage helpers ----------------
 async function loadState(){

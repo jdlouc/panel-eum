@@ -43,8 +43,8 @@ En la pestaña **Calendario** viven las materias programadas por carrera con su 
 
 ### 6. Seguimiento: prioridad, filtros y bitácora
 Cada alumna activa recibe **una sola prioridad**:
-- **Contactar** (rojo): rezago o materia atrasada contra el calendario, 21 o más días sin entrar, o nunca ha entrado.
-- **Vigilar** (ámbar): ligeramente atrasada, o entre 10 y 20 días sin entrar.
+- **Contactar** (rojo): rezago o materia atrasada contra el calendario (más de 50 puntos por debajo de lo esperado), 15 o más días sin entrar, o nunca ha entrado.
+- **Vigilar** (ámbar): ligeramente atrasada (hasta 50 puntos por debajo de lo esperado), o entre 10 y 14 días sin entrar.
 - **Al corriente** (verde): el resto. Si la carrera no tiene calendario cargado, se usa el semáforo por avance.
 
 La tabla muestra el motivo, el **ritmo** frente al corte anterior (avanzó N puntos o sin avance), el último acceso y el último contacto. Los botones de filtro (Contactar, Vigilar, Rezago, Sin avance, Sin entrar 14+ d, Por contactar, Seguimiento vencido, Bajas…) se combinan con el buscador y las tarjetas por carrera, y la lista visible se puede **copiar (correos)** o **exportar a CSV**. Los umbrales están al inicio del script (`DIAS_INACTIVIDAD_ALERTA`, `DIAS_INACTIVIDAD_CRITICA`, `TOLERANCIA_CALENDARIO`).
