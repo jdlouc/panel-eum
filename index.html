@@ -423,6 +423,15 @@
 #eum-app .as-fecha { border:none; background:none; font: 600 10.5px 'IBM Plex Sans', system-ui, sans-serif; color:var(--ink-soft); cursor:pointer; padding:2px 0; width:100%; display:flex; flex-direction:column; align-items:center; line-height:1.15; }
 #eum-app .as-fecha .d { font-size:13px; font-weight:700; color:var(--ink); }
 #eum-app .as-fecha .y { font-size:9.5px; font-weight:500; }
+#eum-app .as-tag { display:block; margin-top:3px; padding:1px 3px; border-radius:3px; font-size:8.5px; font-weight:700; line-height:1.1; }
+#eum-app .as-tag.pend { background:var(--warn-soft); color:var(--warn-text); }
+#eum-app .as-tag.sin, #eum-app .as-tag.prox { background:var(--paper); color:var(--ink-soft); }
+#eum-app table.as-matrix thead th.as-pend { background:var(--warn-soft); }
+#eum-app .as-cell:disabled { cursor:default; opacity:.55; }
+#eum-app .as-pendientes { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; background:var(--warn-soft); color:var(--warn-text); border-radius:10px; padding:8px 12px; margin:0 0 10px; font-size:12.5px; }
+#eum-app .as-pendientes.ok { background:var(--accent-green-soft); color:var(--ok-text); }
+#eum-app .as-pendientes .chip-btn { padding:3px 10px; font-size:12px; }
+#eum-app .as-form select { font: inherit; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); }
 #eum-app .as-vmat { writing-mode:vertical-rl; transform:rotate(180deg); height:132px; width:100%; margin:0 auto 4px; overflow:hidden; font-size:10px; line-height:1.15; font-weight:600; color:var(--brand); text-align:start; }
 #eum-app table.as-matrix .as-corte { box-shadow: inset 2px 0 0 var(--line); }
 #eum-app .as-fecha:hover { color:var(--ink); text-decoration:underline; }
@@ -801,7 +810,14 @@
           <input type="file" id="eum-asist-file" accept=".csv,text/csv">
         </div>
         <div id="eum-asist-draft"></div>
-        <div style="margin-top:12px;"><button class="btn-secondary" onclick="EUM.exportarAsistencia()">⬇ Exportar toda la asistencia (CSV)</button></div>
+        <div class="as-form" style="margin-top:14px;">
+          <b>Exportar historial de asistencia (CSV)</b>
+          <label>Carrera <select id="eum-exp-carrera"><option value="">Todas</option><option>Administración</option><option>Contabilidad y Finanzas</option><option>Mercadotecnia Estratégica</option><option>Software y Sistemas Computacionales</option></select></label>
+          <label>Desde <input type="date" id="eum-exp-desde"></label>
+          <label>Hasta <input type="date" id="eum-exp-hasta"></label>
+          <button class="btn-secondary" onclick="EUM.exportarAsistencia()">⬇ Descargar</button>
+          <span class="rc-meta" id="eum-exp-msg" style="flex:1 1 100%; margin:0;">Sin fechas se exporta todo el historial. El archivo se puede volver a importar aquí mismo.</span>
+        </div>
       </div>
     </div>
   </div>
@@ -892,7 +908,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.9 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.10 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -983,6 +999,7 @@ let STATE = {
   asistCareer: null,          // null = todas las carreras (solo en la vista Resumen)
   asistVista: 'resumen',
   asistFecha: null,
+  asistProximas: false,       // en el Historial, mostrar también las clases que aún no llegan
 };
 
 // ---------------- umbrales del semáforo de atención (ajustables) ----------------
@@ -1282,6 +1299,11 @@ function sesionesSemilla(ck){
   return out;
 }
 function sesionesDe(ck, hasta){ hasta = hasta || hoyLocal(); return (ASIST.fechas[ck]||[]).filter(f=>fechaDe(f)<=hasta); }
+// Clases programadas hasta hoy a las que todavía no se les pasa lista (sin ninguna marca y no marcadas "sin clase").
+function pendientesDe(ck){
+  const sin = ASIST.sinClase[ck] || {}, reg = new Set(ASIST.sesiones[ck] || []);
+  return sesionesDe(ck, hoyLocal()).filter(f=>!sin[f] && !reg.has(f));
+}
 function materiaDeSesion(ck, f){ const x = (ASIST.cfg[ck]||[]).find(s=>s.f===f); return x ? (x.m||'') : ''; }
 function fmtSesion(f){ return `${DIAS_CORTOS[new Date(ymdToUTC(f)).getUTCDay()]} ${fmtDM(f)}`; }
 
@@ -1463,27 +1485,37 @@ function asistListaHtml(prog, ck, sesiones){
   return nav + resumen + `<div class="as-lista">${filas || '<div class="empty-state">No hay alumnas activas registradas en esta carrera.</div>'}</div>`;
 }
 function asistHistorialHtml(prog, ck){
-  const ses = ASIST.sesiones[ck] || [];
-  if (!ses.length) return '<div class="empty-state">Todavía no hay asistencia capturada para esta carrera. Pasa lista en la vista "Pasar lista" o importa el historial.</div>';
+  const hoy = hoyLocal(), sin = ASIST.sinClase[ck] || {}, registradas = new Set(ASIST.sesiones[ck] || []);
+  const ses = (ASIST.fechas[ck] || []).filter(f=>STATE.asistProximas || fechaDe(f) <= hoy);
+  if (!ses.length) return '<div class="empty-state">Esta carrera todavía no tiene clases programadas hasta hoy. Agrégalas en la vista "Días de clase y materias".</div>';
+  const estadoDe = f => sin[f] ? 'sin' : (fechaDe(f) > hoy ? 'prox' : (registradas.has(f) ? 'ok' : 'pend'));
+  const pend = ses.filter(f=>estadoDe(f)==='pend');
   const alumnas = maestroByCareer(prog).filter(m=>m.estatus==='activa' || ASIST.stats.get(m.email)).sort((x,y)=>x.nombre.localeCompare(y.nombre));
   const anio = ses[ses.length-1].slice(0,4);
   // una columna por clase, todas del mismo ancho y pegadas; la materia va en vertical sobre cada fecha
   const corte = ses.map((f,i)=>i>0 && materiaDeSesion(ck, f)!==materiaDeSesion(ck, ses[i-1]));
+  const ETIQUETA = { pend:'sin lista', sin:'sin clase', prox:'próxima' };
   const cab = ses.map((f,i)=>{
-    const mt = materiaDeSesion(ck, f), dm = fmtDM(f, false).split(' ');
-    return `<th class="as-col${corte[i]?' as-corte':''}" title="${escAttr(`${fmtSesion(f)} ${f.slice(0,4)}${rotuloClase(f)}${mt ? ' · '+mt : ''}`)}"><div class="as-vmat">${escAttr(mt)}</div><button class="as-fecha" onclick="EUM.asistIr('${f}'); EUM.asistVista('lista')"><span class="d">${dm[0]}</span><span class="m">${dm[1]}</span>${f.slice(0,4)!==anio ? `<span class="y">${f.slice(0,4)}</span>` : ''}${numClase(f)>1 ? `<span class="y">${numClase(f)}ª</span>` : ''}</button></th>`;
+    const mt = materiaDeSesion(ck, f), dm = fmtDM(f, false).split(' '), est = estadoDe(f);
+    return `<th class="as-col${corte[i]?' as-corte':''}${est==='pend'?' as-pend':''}" title="${escAttr(`${fmtSesion(f)} ${f.slice(0,4)}${rotuloClase(f)}${mt ? ' · '+mt : ''}${est!=='ok' ? ' · '+ETIQUETA[est] : ''}`)}"><div class="as-vmat">${escAttr(mt)}</div><button class="as-fecha" onclick="EUM.asistIr('${f}'); EUM.asistVista('lista')"><span class="d">${dm[0]}</span><span class="m">${dm[1]}</span>${f.slice(0,4)!==anio ? `<span class="y">${f.slice(0,4)}</span>` : ''}${numClase(f)>1 ? `<span class="y">${numClase(f)}ª</span>` : ''}${est!=='ok' ? `<span class="as-tag ${est}">${ETIQUETA[est]}</span>` : ''}</button></th>`;
   }).join('');
   const filas = alumnas.map(m=>{
     const mm = ASIST.marcas[m.email] || {}, st = ASIST.stats.get(m.email);
     const celdas = ses.map((f,i)=>{
-      const e = mm[f], cls = e ? e.toLowerCase() : 'vacio';
-      return `<td class="${corte[i]?'as-corte':''}"><button class="as-cell ${cls}" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${escAttr(fmtSesion(f)+rotuloClase(f)+' · '+(e ? ASIST_ESTADOS[e] : 'sin marcar'))}">${e || '·'}</button></td>`;
+      const e = mm[f], est = estadoDe(f), cls = e ? e.toLowerCase() : 'vacio';
+      const bloqueada = !e && (est==='sin' || est==='prox');
+      return `<td class="${corte[i]?'as-corte':''}"><button class="as-cell ${cls}" ${bloqueada ? 'disabled' : `data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)"`} title="${escAttr(fmtSesion(f)+rotuloClase(f)+' · '+(e ? ASIST_ESTADOS[e] : (est==='sin' ? 'sin clase' : (est==='prox' ? 'próxima clase' : 'sin marcar'))))}">${e || (est==='sin' ? '–' : '·')}</button></td>`;
     }).join('');
     const pct = st ? (st.baja ? 'Baja' : (st.pct==null ? '—' : st.pct+'%')) : '—';
     const racha = st && !st.baja && st.racha>=ASIST_FALTAS_AMARILLO ? `<span class="venc">${st.racha}</span>` : (st && !st.baja ? '0' : '—');
     return `<tr><th class="as-sticky" scope="row">${escAttr(m.nombre)}</th><td class="mono as-fin">${pct}</td><td class="mono as-fin">${racha}</td>${celdas}</tr>`;
   }).join('');
-  return `<p class="rc-meta" style="margin:0 0 8px;">Haz clic en una celda para cambiar su estado (asistencia → retardo → justificado → falta → baja → vacío). Haz clic en una fecha para abrir esa clase. Sobre cada fecha va la materia de esa clase.</p>
+  const aviso = pend.length
+    ? `<div class="as-pendientes"><b>${pend.length} ${pend.length===1 ? 'clase sin pasar lista' : 'clases sin pasar lista'}:</b> ${pend.slice(0,14).map(f=>`<button class="chip-btn" onclick="EUM.asistIr('${f}'); EUM.asistVista('lista')">${fmtSesion(f)}${numClase(f)>1 ? ' ·'+numClase(f)+'ª' : ''}</button>`).join(' ')}${pend.length>14 ? ` y ${pend.length-14} más` : ''}</div>`
+    : '<div class="as-pendientes ok">✓ Todas las clases programadas hasta hoy tienen lista.</div>';
+  return `${aviso}
+    <p class="rc-meta" style="margin:0 0 8px;">Haz clic en una celda para cambiar su estado (asistencia → retardo → justificado → falta → baja → vacío) o en una fecha para abrir esa clase. Sobre cada fecha va su materia.
+      <button class="chip-btn ${STATE.asistProximas?'active':''}" style="margin-left:8px;" onclick="EUM.asistProximas()">${STATE.asistProximas?'✓ ':''}Ver próximas clases</button></p>
     <div class="as-wrap"><table class="as-matrix" style="width:${210+2*56+ses.length*38}px"><colgroup><col style="width:210px"><col style="width:56px"><col style="width:56px">${ses.map(()=>'<col style="width:38px">').join('')}</colgroup><thead><tr><th class="as-sticky">Alumna</th><th class="as-fin">%</th><th class="as-fin" title="Faltas seguidas">F seg.</th>${cab}</tr></thead><tbody>${filas}</tbody></table></div>`;
 }
 
@@ -1506,9 +1538,11 @@ function asistResumenHtml(prog){
 
   // tendencia semanal (las carreras tienen días distintos: se agrupa por semana) y por materia
   const semanas = {}, materias = {}, sesPorCarrera = [];
+  let pendTotal = 0;
   progs.forEach(p=>{
     const ck = CAREER_KEYS[p], ses = ASIST.sesiones[ck] || [], roster = maestroByCareer(p);
     sesPorCarrera.push(ses.length);
+    pendTotal += pendientesDe(ck).length;
     ses.forEach(f=>{
       const c = { A:0, R:0, J:0, F:0 };
       roster.forEach(m=>{ const e = (ASIST.marcas[m.email]||{})[f]; if (e && c[e]!==undefined) c[e]++; });
@@ -1531,6 +1565,7 @@ function asistResumenHtml(prog){
     ${box(sesTxt, 'Sesiones con registro', prog ? '' : 'por carrera')}
     ${box(conRacha, `Con ${ASIST_FALTAS_AMARILLO}+ faltas seguidas`, rojas ? `${rojas} con ${ASIST_FALTAS_ROJO} o más` : '', conRacha ? 'risk' : '')}
     ${box(bajas, 'Bajas en asistencia', '')}
+    ${box(pendTotal, 'Clases sin pasar lista', pendTotal ? 'hasta hoy' : 'todo al día', pendTotal ? 'risk' : '')}
     ${box(ult && ult.pct!=null ? ult.pct+'%' : '—', 'Última sesión', ult ? fmtDM(ult.f, true) : '')}
   </div>`;
 
@@ -1659,6 +1694,7 @@ function sesBorrar(f){
   aplicarCfg(cfg=>{ cfg[ck] = cfg[ck].filter(s=>s.f!==f); });
 }
 function asistCarrera(i){ ASIST_AVISO = ''; ASIST_NUEVAS.clear(); ASIST_IR = 'proxima'; if (i < 0){ STATE.asistCareer = null; STATE.asistVista = 'resumen'; } else STATE.asistCareer = CAREER_ORDER[i]; STATE.asistFecha = null; renderAsistencia(); }
+function asistProximas(){ STATE.asistProximas = !STATE.asistProximas; renderAsistencia(); }
 function asistVista(v){ if (v !== STATE.asistVista){ ASIST_AVISO = ''; ASIST_NUEVAS.clear(); ASIST_IR = 'proxima'; } STATE.asistVista = v; if (v!=='resumen' && !STATE.asistCareer) STATE.asistCareer = CAREER_ORDER[0]; renderAsistencia(); }
 function asistIr(f){ STATE.asistFecha = f; renderAsistencia(); }
 function asistMarcar(email, e){
@@ -1794,23 +1830,34 @@ function asistDescartarImport(){
   ASIST_DRAFT = null; renderBorradorAsistencia();
   document.getElementById('eum-asist-file-name').textContent = '';
 }
-function csvDeAsistencia(){
+function csvDeAsistencia(desde, hasta, prog){
   const filas = [['Carrera','Alumna','Correo','Fecha','Estado','Materia','Clase']];
-  CAREER_ORDER.forEach(prog=>{
-    maestroByCareer(prog).slice().sort((x,y)=>x.nombre.localeCompare(y.nombre)).forEach(m=>{
+  CAREER_ORDER.filter(p=>!prog || p===prog).forEach(p=>{
+    maestroByCareer(p).slice().sort((x,y)=>x.nombre.localeCompare(y.nombre)).forEach(m=>{
       const mm = ASIST.marcas[m.email] || {};
-      Object.keys(mm).sort().forEach(f=>filas.push([prog, m.nombre, m.email, fechaDe(f), ASIST_ESTADOS[mm[f]], materiaDeSesion(CAREER_KEYS[prog], f), numClase(f)]));
+      Object.keys(mm).sort().forEach(f=>{
+        const d = fechaDe(f);
+        if ((desde && d < desde) || (hasta && d > hasta)) return;
+        filas.push([p, m.nombre, m.email, d, ASIST_ESTADOS[mm[f]], materiaDeSesion(CAREER_KEYS[p], f), numClase(f)]);
+      });
     });
   });
-  return filas.map(f=>f.map(csvEscape).join(',')).join('\r\n');
+  return { csv: filas.map(f=>f.map(csvEscape).join(',')).join('\r\n'), n: filas.length - 1 };
 }
 function exportarAsistencia(){
-  const blob = new Blob([String.fromCharCode(0xFEFF) + csvDeAsistencia()], { type:'text/csv;charset=utf-8' });
+  const val = id => (document.getElementById(id)||{}).value || '';
+  const prog = val('eum-exp-carrera'), desde = val('eum-exp-desde'), hasta = val('eum-exp-hasta');
+  const msg = document.getElementById('eum-exp-msg');
+  if (desde && hasta && hasta < desde){ alert('La fecha final debe ser igual o posterior a la inicial.'); return; }
+  const r = csvDeAsistencia(desde, hasta, prog);
+  if (!r.n){ if (msg) msg.textContent = 'No hay registros de asistencia en ese rango.'; return; }
+  const blob = new Blob([String.fromCharCode(0xFEFF) + r.csv], { type:'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = `asistencia_EUM_${hoyLocal()}.csv`;
+  a.href = url; a.download = `asistencia_EUM_${desde||'inicio'}_a_${hasta||hoyLocal()}${prog ? '_'+CAREER_KEYS[prog] : ''}.csv`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  if (msg) msg.textContent = `✓ ${r.n} registros exportados${prog ? ' de '+prog : ''}${desde || hasta ? ` (${desde || 'inicio'} a ${hasta || 'hoy'})` : ''}.`;
 }
 
 // ---- sección de la ficha de la alumna ----
@@ -3327,7 +3374,7 @@ window.EUM = {
   setEstatusMaestro, reasignarCarrera, excludeFromMaestro, registrarPendiente, addManualStudent,
   deleteSnapshot, login, logout, resetPassword, importRosterCsv,
   agregarCorreoAlterno, quitarCorreoAlterno, vincularPendiente,
-  asistCarrera, asistVista, asistIr, asistMarcar, asistCiclar, asistMarcarTodas, asistSinClase, asistAplicarImport, asistDescartarImport, exportarAsistencia, sesAgregar, sesMateria, sesBorrar, exportarResumenAsistencia,
+  asistCarrera, asistVista, asistIr, asistMarcar, asistCiclar, asistMarcarTodas, asistSinClase, asistAplicarImport, asistDescartarImport, exportarAsistencia, sesAgregar, sesMateria, sesBorrar, exportarResumenAsistencia, asistProximas,
   editarCal, agregarMateriaCal, borrarMateriaCal, aplicarCalDraft, descartarCalDraft,
 };
 
