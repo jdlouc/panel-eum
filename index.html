@@ -450,6 +450,8 @@
 #eum-app table.as-dias td { padding:6px 12px; border-bottom:1px solid var(--line); }
 #eum-app table.as-dias td input { width:100%; min-width:240px; }
 #eum-app table.as-dias tr.as-futura td { color:var(--ink-soft); }
+#eum-app table.as-dias tr.as-proxima td { box-shadow: inset 0 2px 0 var(--brand); }
+#eum-app table.as-dias tr.as-nueva td { background: var(--accent-green-soft); }
 #eum-app th.as-grupo { font: 600 11px 'IBM Plex Sans', system-ui, sans-serif; color:var(--brand); background:var(--brand-soft); border-radius:6px; padding:3px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
 #eum-app .rs-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 28px; align-items:start; }
 #eum-app .rs-stack { display:flex; height:16px; border-radius:8px; overflow:hidden; background:var(--paper); margin-bottom:10px; }
@@ -887,7 +889,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.6 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.7 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -1233,6 +1235,9 @@ const DIAS_CORTOS = ['dom','lun','mar','mié','jue','vie','sáb'];
 // cfg: { clave carrera: [ { f:'YYYY-MM-DD', m:'materia' } ] } · fechas: todas las sesiones de cada carrera (lista + fechas con marcas) · sesiones: las que ya cuentan para estadísticas
 const ASIST = { marcas:{}, sinClase:{}, docs:[], stats:new Map(), sesiones:{}, cfg:{}, fechas:{} };
 let ASIST_MSG = '';
+let ASIST_AVISO = '';            // resultado de la última acción en Días de clase
+let ASIST_IR = null;             // 'nuevas' | 'proxima': a qué fila llevar el scroll después de pintar
+const ASIST_NUEVAS = new Set();  // fechas recién agregadas (se resaltan)
 let ASIST_COLA = Promise.resolve();
 let ASIST_DRAFT = null;
 
@@ -1379,8 +1384,19 @@ function renderAsistencia(){
   const cuerpo = STATE.asistVista==='resumen' ? asistResumenHtml(prog) : (STATE.asistVista==='historial' ? asistHistorialHtml(prog, ck) : (STATE.asistVista==='dias' ? asistDiasHtml(prog, ck) : asistListaHtml(prog, ck, sesiones)));
   const materias = ck ? Array.from(new Set((STATE.calendario[prog]||[]).map(x=>x.materia).concat((ASIST.cfg[ck]||[]).map(x=>x.m).filter(Boolean)))).sort() : [];
   const datalist = `<datalist id="eum-asist-materias">${materias.map(m=>`<option value="${escAttr(m)}"></option>`).join('')}</datalist>`;
+  const claveVista = STATE.asistVista + '|' + (prog || '');
+  const wrapPrev = root.querySelector('.as-wrap'), mismaVista = root.dataset.vista === claveVista;
+  const topPrev = wrapPrev ? wrapPrev.scrollTop : 0, leftPrev = wrapPrev ? wrapPrev.scrollLeft : 0;
   root.innerHTML = `<div class="quick-chips">${chips}</div>
     <div class="quick-chips">${vistas}<span id="eum-asist-estado" class="as-estado" role="status">${escAttr(ASIST_MSG)}</span></div>${datalist}${cuerpo}`;
+  root.dataset.vista = claveVista;
+  const wrap = root.querySelector('.as-wrap');
+  if (wrap){
+    const meta = ASIST_IR==='nuevas' ? wrap.querySelector('tr.as-nueva') : (ASIST_IR==='proxima' ? wrap.querySelector('tr.as-proxima') : null);
+    if (meta) wrap.scrollTop += meta.getBoundingClientRect().top - wrap.getBoundingClientRect().top - wrap.clientHeight/2;
+    else if (mismaVista){ wrap.scrollTop = topPrev; wrap.scrollLeft = leftPrev; }
+  }
+  ASIST_IR = null;
 }
 function asistListaHtml(prog, ck, sesiones){
   const fecha = STATE.asistFecha;
@@ -1392,7 +1408,7 @@ function asistListaHtml(prog, ck, sesiones){
   const cuenta = { A:0, R:0, J:0, F:0, B:0, N:0 };
   alumnas.forEach(m=>{ const e = (ASIST.marcas[m.email]||{})[fecha], st = ASIST.stats.get(m.email); if (e) cuenta[e]++; else if (!(st && st.baja)) cuenta.N++; });
   const marcadasEn = f => roster.filter(m=>(ASIST.marcas[m.email]||{})[f]).length;
-  const opciones = sesiones.slice().reverse().map(f=>`<option value="${f}" ${f===fecha?'selected':''}>${fmtSesion(f)} ${f.slice(0,4)}${materiaDeSesion(ck,f)?' · '+escAttr(materiaDeSesion(ck,f)):''} · ${marcadasEn(f)}/${total} marcadas${(ASIST.sinClase[ck]||{})[f]?' · sin clase':''}</option>`).join('');
+  const opciones = sesiones.map(f=>`<option value="${f}" ${f===fecha?'selected':''}>${fmtSesion(f)} ${f.slice(0,4)}${materiaDeSesion(ck,f)?' · '+escAttr(materiaDeSesion(ck,f)):''} · ${marcadasEn(f)}/${total} marcadas${(ASIST.sinClase[ck]||{})[f]?' · sin clase':''}</option>`).join('');
   const i = sesiones.indexOf(fecha);
   const nav = `<div class="as-nav">
     <button class="chip-btn" onclick="EUM.asistIr('${i>0?sesiones[i-1]:fecha}')" ${i<=0?'disabled':''} aria-label="Sesión anterior">‹</button>
@@ -1544,30 +1560,24 @@ function asistDiasHtml(prog, ck){
   const lista = (ASIST.cfg[ck]||[]).slice().concat((ASIST.fechas[ck]||[]).filter(f=>!(ASIST.cfg[ck]||[]).some(s=>s.f===f)).map(f=>({ f, m:'' }))).sort((a,b)=>a.f.localeCompare(b.f));
   const roster = maestroByCareer(prog);
   const marcadasEn = f => roster.filter(m=>(ASIST.marcas[m.email]||{})[f]).length;
-  const ordenada = lista.filter(x=>x.f<=hoy).reverse().concat(lista.filter(x=>x.f>hoy));
-  const filas = ordenada.map(x=>{
+  const proxima = (lista.find(x=>x.f>=hoy)||{}).f;
+  const filas = lista.map(x=>{
     const sin = !!(ASIST.sinClase[ck]||{})[x.f], futura = x.f > hoy, n = marcadasEn(x.f);
-    return `<tr class="${futura?'as-futura':''}">
+    return `<tr class="${futura?'as-futura':''} ${x.f===proxima?'as-proxima':''} ${ASIST_NUEVAS.has(x.f)?'as-nueva':''}">
       <td class="mono">${fmtSesion(x.f)} ${x.f.slice(0,4)}</td>
       <td><input type="text" list="eum-asist-materias" value="${escAttr(x.m||'')}" placeholder="Sin materia" onchange="EUM.sesMateria('${x.f}', this.value)" aria-label="Materia del ${x.f}"></td>
-      <td class="sub">${futura ? 'próxima' : (sin ? 'sin clase' : `${n} marcadas`)}</td>
+      <td class="sub">${x.f===hoy ? `hoy · ${n} marcadas` : (futura ? 'próxima' : (sin ? 'sin clase' : `${n} marcadas`))}</td>
       <td><button class="tag-remove" onclick="EUM.sesBorrar('${x.f}')">quitar</button></td>
     </tr>`;
   }).join('');
-  return `<p class="rc-meta" style="margin:0 0 10px;">Cada carrera tiene sus propios días de clase. Agrega los que falten (puedes repetirlos cada semana hasta una fecha), asigna la materia que se ve en cada uno y luego pasa lista en la vista "Pasar lista".</p>
+  return `<p class="rc-meta" style="margin:0 0 10px;">Cada carrera tiene sus propios días de clase, ordenados por fecha. Agrega los que falten (puedes repetirlos cada semana hasta una fecha), escribe la materia de cada día y luego pasa lista en la vista "Pasar lista".</p>
+    ${ASIST_AVISO ? `<div class="diff-report" role="status" style="margin:0 0 12px;">${escAttr(ASIST_AVISO)}</div>` : ''}
     <div class="as-form">
       <b>Agregar día de clase</b>
       <label>Fecha <input type="date" id="eum-ses-fecha"></label>
       <label>Repetir cada semana hasta <input type="date" id="eum-ses-hasta"></label>
       <label>Materia <input type="text" list="eum-asist-materias" id="eum-ses-materia" placeholder="Opcional"></label>
       <button class="btn-secondary" onclick="EUM.sesAgregar()">+ Agregar</button>
-    </div>
-    <div class="as-form">
-      <b>Asignar materia a varios días</b>
-      <label>Del <input type="date" id="eum-ses-desde"></label>
-      <label>Al <input type="date" id="eum-ses-hasta2"></label>
-      <label>Materia <input type="text" list="eum-asist-materias" id="eum-ses-materia2" placeholder="Materia"></label>
-      <button class="btn-secondary" onclick="EUM.sesAsignar()">Asignar</button>
     </div>
     <div class="as-wrap"><table class="as-dias"><thead><tr><th>Día de clase</th><th>Materia</th><th>Asistencia</th><th></th></tr></thead><tbody>${filas || '<tr><td colspan="4" style="color:var(--ink-soft);">Aún no hay días de clase. Agrega el primero arriba.</td></tr>'}</tbody></table></div>`;
 }
@@ -1579,22 +1589,25 @@ function sesAgregar(){
   if (!f){ alert('Indica la fecha del día de clase.'); return; }
   if (hasta && hasta < f){ alert('La fecha final debe ser igual o posterior a la inicial.'); return; }
   const fechas = [f]; if (hasta){ let d = sumarDias(f, 7); while (d <= hasta && fechas.length < 80){ fechas.push(d); d = sumarDias(d, 7); } }
+  const existentes = new Set(ASIST.fechas[ck] || []);
+  const nuevas = fechas.filter(d=>!existentes.has(d)), ya = fechas.length - nuevas.length;
+  ASIST_NUEVAS.clear(); nuevas.forEach(d=>ASIST_NUEVAS.add(d));
+  if (!nuevas.length){
+    ASIST_AVISO = fechas.length===1 ? `El ${fmtSesion(f)} ${f.slice(0,4)} ya estaba en la lista de ${prog}.` : `Esos ${fechas.length} días ya estaban en la lista de ${prog}.`;
+    if (m){ aplicarCfg(cfg=>fechas.forEach(d=>{ const x = cfg[ck].find(s=>s.f===d); if (x && !x.m) x.m = m; })); ASIST_AVISO += ' Se asignó la materia a los que no tenían.'; }
+    ASIST_IR = null; renderAsistencia(); return;
+  }
+  ASIST_AVISO = nuevas.length===1 ? `Se agregó el ${fmtSesion(nuevas[0])} ${nuevas[0].slice(0,4)}${ya ? ` (otros ${ya} días del rango ya estaban en la lista)` : ''}.` : `Se agregaron ${nuevas.length} días, del ${fmtSesion(nuevas[0])} al ${fmtSesion(nuevas[nuevas.length-1])}${ya ? ` (${ya} ya estaban en la lista)` : ''}.`;
+  ASIST_IR = 'nuevas';
   aplicarCfg(cfg=>fechas.forEach(d=>agregarSesion(cfg, ck, d, m)));
 }
-function sesAsignar(){
-  const ck = CAREER_KEYS[STATE.asistCareer];
-  const d = document.getElementById('eum-ses-desde').value, h = document.getElementById('eum-ses-hasta2').value, m = document.getElementById('eum-ses-materia2').value.trim();
-  if (!d || !h || !m){ alert('Indica desde qué día, hasta qué día y la materia.'); return; }
-  if (h < d){ alert('El día final debe ser igual o posterior al inicial.'); return; }
-  const fechas = (ASIST.fechas[ck]||[]).filter(f=>f>=d && f<=h);
-  if (!fechas.length){ alert('No hay días de clase en ese rango.'); return; }
-  aplicarCfg(cfg=>{ fechas.forEach(f=>agregarSesion(cfg, ck, f, '')); cfg[ck].forEach(s=>{ if (s.f>=d && s.f<=h) s.m = m; }); });
-}
 function sesMateria(f, m){
+  ASIST_AVISO = ''; ASIST_NUEVAS.clear();
   const ck = CAREER_KEYS[STATE.asistCareer]; m = String(m||'').trim();
   aplicarCfg(cfg=>{ agregarSesion(cfg, ck, f, ''); cfg[ck].find(s=>s.f===f).m = m; });
 }
 function sesBorrar(f){
+  ASIST_AVISO = ''; ASIST_NUEVAS.clear();
   const prog = STATE.asistCareer, ck = CAREER_KEYS[prog];
   const emails = maestroByCareer(prog).map(m=>m.email).filter(e=>(ASIST.marcas[e]||{})[f]);
   const msg = emails.length ? `Este día tiene ${emails.length} marcas de asistencia. Si lo quitas se borran también. ¿Quitar el ${f}?` : `¿Quitar el día de clase ${f}?`;
@@ -1605,8 +1618,8 @@ function sesBorrar(f){
   if (emails.length || habiaSin) guardarAsistencia(ck, f.slice(0,7), doc=>{ delete doc.marcas[f]; doc.sin_clase = (doc.sin_clase||[]).filter(x=>x!==f); });
   aplicarCfg(cfg=>{ cfg[ck] = cfg[ck].filter(s=>s.f!==f); });
 }
-function asistCarrera(i){ if (i < 0){ STATE.asistCareer = null; STATE.asistVista = 'resumen'; } else STATE.asistCareer = CAREER_ORDER[i]; STATE.asistFecha = null; renderAsistencia(); }
-function asistVista(v){ STATE.asistVista = v; if (v!=='resumen' && !STATE.asistCareer) STATE.asistCareer = CAREER_ORDER[0]; renderAsistencia(); }
+function asistCarrera(i){ ASIST_AVISO = ''; ASIST_NUEVAS.clear(); ASIST_IR = 'proxima'; if (i < 0){ STATE.asistCareer = null; STATE.asistVista = 'resumen'; } else STATE.asistCareer = CAREER_ORDER[i]; STATE.asistFecha = null; renderAsistencia(); }
+function asistVista(v){ if (v !== STATE.asistVista){ ASIST_AVISO = ''; ASIST_NUEVAS.clear(); ASIST_IR = 'proxima'; } STATE.asistVista = v; if (v!=='resumen' && !STATE.asistCareer) STATE.asistCareer = CAREER_ORDER[0]; renderAsistencia(); }
 function asistIr(f){ STATE.asistFecha = f; renderAsistencia(); }
 function asistMarcar(email, e){
   const ck = CAREER_KEYS[STATE.asistCareer], fecha = STATE.asistFecha; if (!fecha) return;
@@ -3262,7 +3275,7 @@ window.EUM = {
   setEstatusMaestro, reasignarCarrera, excludeFromMaestro, registrarPendiente, addManualStudent,
   deleteSnapshot, login, logout, resetPassword, importRosterCsv,
   agregarCorreoAlterno, quitarCorreoAlterno, vincularPendiente,
-  asistCarrera, asistVista, asistIr, asistMarcar, asistCiclar, asistMarcarTodas, asistSinClase, asistAplicarImport, asistDescartarImport, exportarAsistencia, sesAgregar, sesAsignar, sesMateria, sesBorrar, exportarResumenAsistencia,
+  asistCarrera, asistVista, asistIr, asistMarcar, asistCiclar, asistMarcarTodas, asistSinClase, asistAplicarImport, asistDescartarImport, exportarAsistencia, sesAgregar, sesMateria, sesBorrar, exportarResumenAsistencia,
   editarCal, agregarMateriaCal, borrarMateriaCal, aplicarCalDraft, descartarCalDraft,
 };
 
