@@ -791,7 +791,7 @@
         <span class="chevron">▾</span>
       </div>
       <div class="panel-body">
-        <p style="color:var(--ink-soft); margin-top:0;">Importa un CSV con las columnas <span class="mono">Carrera, Alumna, Fecha, Estado</span> (y opcionalmente <span class="mono">Correo</span> y <span class="mono">Materia</span>). Los días que traiga el archivo se agregan a los días de clase de su carrera. Estado: Asistencia, Retardo, Justificado, Falta o Baja. Las alumnas se buscan por nombre en el roster. Antes de guardar verás un borrador con lo que se importaría y lo que no se pudo ubicar.</p>
+        <p style="color:var(--ink-soft); margin-top:0;">Importa un CSV con las columnas <span class="mono">Carrera, Alumna, Fecha, Estado</span> (y opcionalmente <span class="mono">Correo</span>, <span class="mono">Materia</span> y <span class="mono">Clase</span> cuando hay dos clases el mismo día). Los días que traiga el archivo se agregan a los días de clase de su carrera. Estado: Asistencia, Retardo, Justificado, Falta o Baja. Las alumnas se buscan por nombre en el roster. Antes de guardar verás un borrador con lo que se importaría y lo que no se pudo ubicar.</p>
         <div class="drop-zone" onclick="document.getElementById('eum-asist-file').click()">
           <div>📎 Haz clic para elegir el archivo .csv</div>
           <div class="filename" id="eum-asist-file-name"></div>
@@ -889,7 +889,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.7 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.8 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -1176,7 +1176,7 @@ function visibleRoster(){
 // ---------------- rendering ----------------
 function fmtDate(iso){
   if (!iso) return '—';
-  const d = iso.split('T')[0];
+  const d = iso.split('T')[0].slice(0,10);
   return d;
 }
 function fmtPct(v){ return (v===null||v===undefined) ? '—' : (Math.round(v*10)/10)+'%'; }
@@ -1241,6 +1241,36 @@ const ASIST_NUEVAS = new Set();  // fechas recién agregadas (se resaltan)
 let ASIST_COLA = Promise.resolve();
 let ASIST_DRAFT = null;
 
+// Cada clase tiene una clave: la fecha para la primera del día ('2026-07-25') y fecha#N para las siguientes ('2026-07-25#2').
+function fechaDe(k){ return String(k).slice(0,10); }
+function numClase(k){ const m = /#(\d+)$/.exec(String(k)); return m ? +m[1] : 1; }
+function claveClase(fecha, n){ return n > 1 ? fecha + '#' + n : fecha; }
+function rotuloClase(k){ return numClase(k) > 1 ? ` · clase ${numClase(k)} del día` : ''; }
+function cmpSes(a, b){ return a.f < b.f ? -1 : (a.f > b.f ? 1 : 0); }
+function igualMateria(a, b){ const n = x=>quitarAcentos(String(x||'')).toLowerCase().replace(/\s+/g,' ').trim(); return n(a)===n(b); }
+// Qué pasa al agregar (fecha, materia) a una lista de clases: 'nueva' (otra clase), 'asigna' (el día existía sin materia) o 'igual' (ya estaba).
+function resolverClase(lista, fecha, materia){
+  const delDia = lista.filter(s=>fechaDe(s.f)===fecha).sort(cmpSes);
+  if (!delDia.length) return { key:fecha, accion:'nueva' };
+  if (!materia) return { key:delDia[0].f, accion:'igual' };
+  const igual = delDia.find(s=>igualMateria(s.m, materia)); if (igual) return { key:igual.f, accion:'igual' };
+  const vacia = delDia.find(s=>!s.m); if (vacia) return { key:vacia.f, accion:'asigna' };
+  let n = 2; while (delDia.some(s=>s.f===claveClase(fecha, n))) n++;
+  return { key:claveClase(fecha, n), accion:'nueva' };
+}
+function listaConMarcas(cfg, ck, conMarcas){
+  const l = (cfg[ck]||[]).slice();
+  if (conMarcas) (ASIST.fechas[ck]||[]).forEach(k=>{ if (!l.some(s=>s.f===k)) l.push({ f:k, m:'' }); });
+  return l;
+}
+// Aplica (fecha, materia) a cfg; idempotente, así que sirve igual en memoria y sobre lo guardado.
+function aplicarClase(cfg, ck, fecha, materia, conMarcas){
+  const r = resolverClase(listaConMarcas(cfg, ck, conMarcas), fecha, materia);
+  let x = cfg[ck].find(s=>s.f===r.key);
+  if (!x){ x = { f:r.key, m:'' }; cfg[ck].push(x); cfg[ck].sort(cmpSes); }
+  if (materia && !x.m) x.m = materia;
+  return r;
+}
 function sumarDias(str, n){ return new Date(ymdToUTC(str) + n*DIA_MS).toISOString().slice(0,10); }
 function sesionesSemilla(ck){
   const c = ASIST_CLASES[ck]; if (!c) return [];
@@ -1248,7 +1278,7 @@ function sesionesSemilla(ck){
   while (d <= c.fin){ if (!c.omitir.includes(d)) out.push({ f:d, m:'' }); d = sumarDias(d, 7); }
   return out;
 }
-function sesionesDe(ck, hasta){ hasta = hasta || hoyLocal(); return (ASIST.fechas[ck]||[]).filter(f=>f<=hasta); }
+function sesionesDe(ck, hasta){ hasta = hasta || hoyLocal(); return (ASIST.fechas[ck]||[]).filter(f=>fechaDe(f)<=hasta); }
 function materiaDeSesion(ck, f){ const x = (ASIST.cfg[ck]||[]).find(s=>s.f===f); return x ? (x.m||'') : ''; }
 function fmtSesion(f){ return `${DIAS_CORTOS[new Date(ymdToUTC(f)).getUTCDay()]} ${fmtDM(f)}`; }
 
@@ -1312,7 +1342,7 @@ function aplicarCfg(fn){
     if (!doc) doc = JSON.parse(JSON.stringify(ASIST.cfg));
     CAREER_ORDER.forEach(p=>{ const ck = CAREER_KEYS[p]; if (!Array.isArray(doc[ck])) doc[ck] = sesionesSemilla(ck); });
     fn(doc);
-    CAREER_ORDER.forEach(p=>{ const ck = CAREER_KEYS[p]; doc[ck].sort((a,b)=>a.f.localeCompare(b.f)); });
+    CAREER_ORDER.forEach(p=>{ const ck = CAREER_KEYS[p]; doc[ck].sort(cmpSes); });
     await window.storage.set('asistencia_sesiones', JSON.stringify(doc), false);
   }).then(()=>{ ASIST_MSG = '✓ Guardado'; pintarEstadoAsistencia(); })
     .catch(e=>{ console.error('no se pudo guardar los días de clase', e); ASIST_MSG = '⚠️ No se pudo guardar; revisa tu conexión e inténtalo de nuevo'; pintarEstadoAsistencia(); });
@@ -1321,7 +1351,7 @@ function aplicarCfg(fn){
 function agregarSesion(cfg, ck, f, m){
   const l = cfg[ck]; const x = l.find(s=>s.f===f);
   if (!x) l.push({ f, m: m||'' }); else if (m && !x.m) x.m = m;
-  l.sort((a,b)=>a.f.localeCompare(b.f));
+  l.sort(cmpSes);
 }
 function marcaMem(email, fecha, e){
   const m = ASIST.marcas[email] = ASIST.marcas[email] || {};
@@ -1408,7 +1438,7 @@ function asistListaHtml(prog, ck, sesiones){
   const cuenta = { A:0, R:0, J:0, F:0, B:0, N:0 };
   alumnas.forEach(m=>{ const e = (ASIST.marcas[m.email]||{})[fecha], st = ASIST.stats.get(m.email); if (e) cuenta[e]++; else if (!(st && st.baja)) cuenta.N++; });
   const marcadasEn = f => roster.filter(m=>(ASIST.marcas[m.email]||{})[f]).length;
-  const opciones = sesiones.map(f=>`<option value="${f}" ${f===fecha?'selected':''}>${fmtSesion(f)} ${f.slice(0,4)}${materiaDeSesion(ck,f)?' · '+escAttr(materiaDeSesion(ck,f)):''} · ${marcadasEn(f)}/${total} marcadas${(ASIST.sinClase[ck]||{})[f]?' · sin clase':''}</option>`).join('');
+  const opciones = sesiones.map(f=>`<option value="${f}" ${f===fecha?'selected':''}>${fmtSesion(f)} ${f.slice(0,4)}${rotuloClase(f)}${materiaDeSesion(ck,f)?' · '+escAttr(materiaDeSesion(ck,f)):''} · ${marcadasEn(f)}/${total} marcadas${(ASIST.sinClase[ck]||{})[f]?' · sin clase':''}</option>`).join('');
   const i = sesiones.indexOf(fecha);
   const nav = `<div class="as-nav">
     <button class="chip-btn" onclick="EUM.asistIr('${i>0?sesiones[i-1]:fecha}')" ${i<=0?'disabled':''} aria-label="Sesión anterior">‹</button>
@@ -1437,12 +1467,12 @@ function asistHistorialHtml(prog, ck){
   const grupos = [];
   ses.forEach(f=>{ const mt = materiaDeSesion(ck, f); const g = grupos[grupos.length-1]; if (g && g.m===mt) g.n++; else grupos.push({ m:mt, n:1 }); });
   const filaMaterias = grupos.some(g=>g.m) ? `<tr><th class="as-sticky" style="top:0;"></th><th class="as-fin"></th><th class="as-fin"></th>${grupos.map(g=>`<th colspan="${g.n}" class="as-grupo" title="${escAttr(g.m||'Sin materia asignada')}">${escAttr(g.m||'—')}</th>`).join('')}</tr>` : '';
-  const cab = ses.map(f=>`<th title="${fmtSesion(f)} ${f.slice(0,4)}"><button class="as-fecha" onclick="EUM.asistIr('${f}'); EUM.asistVista('lista')">${fmtDM(f, f.slice(0,4)!==anio)}</button></th>`).join('');
+  const cab = ses.map(f=>`<th title="${fmtSesion(f)} ${f.slice(0,4)}${rotuloClase(f)}"><button class="as-fecha" onclick="EUM.asistIr('${f}'); EUM.asistVista('lista')">${fmtDM(f, f.slice(0,4)!==anio)}${numClase(f)>1 ? ` ·${numClase(f)}ª` : ''}</button></th>`).join('');
   const filas = alumnas.map(m=>{
     const mm = ASIST.marcas[m.email] || {}, st = ASIST.stats.get(m.email);
     const celdas = ses.map(f=>{
       const e = mm[f];
-      return `<td>${e ? `<button class="as-cell ${e.toLowerCase()}" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${fmtSesion(f)} · ${ASIST_ESTADOS[e]}">${e}</button>` : `<button class="as-cell vacio" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${fmtSesion(f)} · sin marcar">·</button>`}</td>`;
+      return `<td>${e ? `<button class="as-cell ${e.toLowerCase()}" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${fmtSesion(f)}${rotuloClase(f)} · ${ASIST_ESTADOS[e]}">${e}</button>` : `<button class="as-cell vacio" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${fmtSesion(f)}${rotuloClase(f)} · sin marcar">·</button>`}</td>`;
     }).join('');
     const pct = st ? (st.baja ? 'Baja' : (st.pct==null ? '—' : st.pct+'%')) : '—';
     const racha = st && !st.baja && st.racha>=ASIST_FALTAS_AMARILLO ? `<span class="venc">${st.racha}</span>` : (st && !st.baja ? '0' : '—');
@@ -1557,20 +1587,20 @@ function exportarResumenAsistencia(){
 
 function asistDiasHtml(prog, ck){
   const hoy = hoyLocal();
-  const lista = (ASIST.cfg[ck]||[]).slice().concat((ASIST.fechas[ck]||[]).filter(f=>!(ASIST.cfg[ck]||[]).some(s=>s.f===f)).map(f=>({ f, m:'' }))).sort((a,b)=>a.f.localeCompare(b.f));
+  const lista = (ASIST.cfg[ck]||[]).slice().concat((ASIST.fechas[ck]||[]).filter(f=>!(ASIST.cfg[ck]||[]).some(s=>s.f===f)).map(f=>({ f, m:'' }))).sort(cmpSes);
   const roster = maestroByCareer(prog);
   const marcadasEn = f => roster.filter(m=>(ASIST.marcas[m.email]||{})[f]).length;
-  const proxima = (lista.find(x=>x.f>=hoy)||{}).f;
+  const proxima = (lista.find(x=>fechaDe(x.f)>=hoy)||{}).f;
   const filas = lista.map(x=>{
-    const sin = !!(ASIST.sinClase[ck]||{})[x.f], futura = x.f > hoy, n = marcadasEn(x.f);
+    const sin = !!(ASIST.sinClase[ck]||{})[x.f], futura = fechaDe(x.f) > hoy, n = marcadasEn(x.f);
     return `<tr class="${futura?'as-futura':''} ${x.f===proxima?'as-proxima':''} ${ASIST_NUEVAS.has(x.f)?'as-nueva':''}">
-      <td class="mono">${fmtSesion(x.f)} ${x.f.slice(0,4)}</td>
+      <td class="mono">${fmtSesion(x.f)} ${x.f.slice(0,4)}${numClase(x.f)>1 ? ` <span class="sub">· clase ${numClase(x.f)} del día</span>` : ''}</td>
       <td><input type="text" list="eum-asist-materias" value="${escAttr(x.m||'')}" placeholder="Sin materia" onchange="EUM.sesMateria('${x.f}', this.value)" aria-label="Materia del ${x.f}"></td>
-      <td class="sub">${x.f===hoy ? `hoy · ${n} marcadas` : (futura ? 'próxima' : (sin ? 'sin clase' : `${n} marcadas`))}</td>
+      <td class="sub">${fechaDe(x.f)===hoy ? `hoy · ${n} marcadas` : (futura ? 'próxima' : (sin ? 'sin clase' : `${n} marcadas`))}</td>
       <td><button class="tag-remove" onclick="EUM.sesBorrar('${x.f}')">quitar</button></td>
     </tr>`;
   }).join('');
-  return `<p class="rc-meta" style="margin:0 0 10px;">Cada carrera tiene sus propios días de clase, ordenados por fecha. Agrega los que falten (puedes repetirlos cada semana hasta una fecha), escribe la materia de cada día y luego pasa lista en la vista "Pasar lista".</p>
+  return `<p class="rc-meta" style="margin:0 0 10px;">Cada carrera tiene sus propios días de clase, ordenados por fecha. Agrega los que falten (puedes repetirlos cada semana hasta una fecha), escribe la materia de cada día y luego pasa lista en la vista "Pasar lista". Si un día hay dos clases, agrega la misma fecha con la materia de la segunda: cada clase lleva su propia lista.</p>
     ${ASIST_AVISO ? `<div class="diff-report" role="status" style="margin:0 0 12px;">${escAttr(ASIST_AVISO)}</div>` : ''}
     <div class="as-form">
       <b>Agregar día de clase</b>
@@ -1589,17 +1619,21 @@ function sesAgregar(){
   if (!f){ alert('Indica la fecha del día de clase.'); return; }
   if (hasta && hasta < f){ alert('La fecha final debe ser igual o posterior a la inicial.'); return; }
   const fechas = [f]; if (hasta){ let d = sumarDias(f, 7); while (d <= hasta && fechas.length < 80){ fechas.push(d); d = sumarDias(d, 7); } }
-  const existentes = new Set(ASIST.fechas[ck] || []);
-  const nuevas = fechas.filter(d=>!existentes.has(d)), ya = fechas.length - nuevas.length;
-  ASIST_NUEVAS.clear(); nuevas.forEach(d=>ASIST_NUEVAS.add(d));
-  if (!nuevas.length){
-    ASIST_AVISO = fechas.length===1 ? `El ${fmtSesion(f)} ${f.slice(0,4)} ya estaba en la lista de ${prog}.` : `Esos ${fechas.length} días ya estaban en la lista de ${prog}.`;
-    if (m){ aplicarCfg(cfg=>fechas.forEach(d=>{ const x = cfg[ck].find(s=>s.f===d); if (x && !x.m) x.m = m; })); ASIST_AVISO += ' Se asignó la materia a los que no tenían.'; }
-    ASIST_IR = null; renderAsistencia(); return;
-  }
-  ASIST_AVISO = nuevas.length===1 ? `Se agregó el ${fmtSesion(nuevas[0])} ${nuevas[0].slice(0,4)}${ya ? ` (otros ${ya} días del rango ya estaban en la lista)` : ''}.` : `Se agregaron ${nuevas.length} días, del ${fmtSesion(nuevas[0])} al ${fmtSesion(nuevas[nuevas.length-1])}${ya ? ` (${ya} ya estaban en la lista)` : ''}.`;
-  ASIST_IR = 'nuevas';
-  aplicarCfg(cfg=>fechas.forEach(d=>agregarSesion(cfg, ck, d, m)));
+  // se simula sobre una copia para saber qué pasará con cada fecha
+  const tmp = JSON.parse(JSON.stringify(ASIST.cfg));
+  const plan = fechas.map(d=>aplicarClase(tmp, ck, d, m, true));
+  const nuevas = plan.filter(p=>p.accion==='nueva'), asignadas = plan.filter(p=>p.accion==='asigna'), iguales = plan.filter(p=>p.accion==='igual');
+  const rot = k => `${fmtSesion(k)} ${k.slice(0,4)}${rotuloClase(k)}`;
+  ASIST_NUEVAS.clear(); nuevas.concat(asignadas).forEach(p=>ASIST_NUEVAS.add(p.key));
+  const partes = [];
+  if (nuevas.length===1) partes.push(`Se agregó el ${rot(nuevas[0].key)}${m ? ` (${m})` : ''}`);
+  else if (nuevas.length>1) partes.push(`Se agregaron ${nuevas.length} clases, del ${fmtSesion(nuevas[0].key)} al ${fmtSesion(nuevas[nuevas.length-1].key)}`);
+  if (asignadas.length) partes.push(`la materia se asignó a ${asignadas.length===1 ? 'un día' : asignadas.length+' días'} que no la tenía${asignadas.length===1?'':'n'}`);
+  if (iguales.length) partes.push(`${iguales.length===1 ? '1 ya estaba' : iguales.length+' ya estaban'} en la lista${!m && fechas.length===1 ? '. Para agregar otra clase el mismo día, escribe su materia' : ''}`);
+  ASIST_AVISO = (partes.join('; ') || 'Sin cambios').replace(/^./, c=>c.toUpperCase()) + '.';
+  ASIST_IR = (nuevas.length || asignadas.length) ? 'nuevas' : null;
+  if (!nuevas.length && !asignadas.length){ renderAsistencia(); return; }
+  aplicarCfg(cfg=>fechas.forEach(d=>aplicarClase(cfg, ck, d, m, cfg===ASIST.cfg)));
 }
 function sesMateria(f, m){
   ASIST_AVISO = ''; ASIST_NUEVAS.clear();
@@ -1610,7 +1644,8 @@ function sesBorrar(f){
   ASIST_AVISO = ''; ASIST_NUEVAS.clear();
   const prog = STATE.asistCareer, ck = CAREER_KEYS[prog];
   const emails = maestroByCareer(prog).map(m=>m.email).filter(e=>(ASIST.marcas[e]||{})[f]);
-  const msg = emails.length ? `Este día tiene ${emails.length} marcas de asistencia. Si lo quitas se borran también. ¿Quitar el ${f}?` : `¿Quitar el día de clase ${f}?`;
+  const rotulo = `${fmtSesion(f)} ${f.slice(0,4)}${rotuloClase(f)}`;
+  const msg = emails.length ? `Esta clase tiene ${emails.length} marcas de asistencia. Si la quitas se borran también. ¿Quitar el ${rotulo}?` : `¿Quitar la clase del ${rotulo}?`;
   if (!confirm(msg)) return;
   const habiaSin = !!(ASIST.sinClase[ck]||{})[f];
   emails.forEach(e=>marcaMem(e, f, null));
@@ -1667,7 +1702,7 @@ function armarBorradorAsistencia(text){
   const parsed = Papa.parse(text.replace(/^﻿/, '').trim(), { skipEmptyLines:true });
   const hdr = (parsed.data[0]||[]).map(h=>quitarAcentos(String(h||'')).toLowerCase().trim());
   const iAl = hdr.findIndex(h=>h==='alumna' || h==='nombre'), iCo = hdr.findIndex(h=>h==='correo' || h==='email');
-  const iFe = hdr.indexOf('fecha'), iEs = hdr.indexOf('estado'), iCa = hdr.indexOf('carrera'), iMa = hdr.indexOf('materia');
+  const iFe = hdr.indexOf('fecha'), iEs = hdr.indexOf('estado'), iCa = hdr.indexOf('carrera'), iMa = hdr.indexOf('materia'), iCl = hdr.indexOf('clase');
   if (iFe<0 || iEs<0 || (iAl<0 && iCo<0)){ out.error = `Faltan columnas. Se necesitan Alumna (o Correo), Fecha y Estado. Encabezados que trae el archivo: ${(parsed.data[0]||[]).join(' | ')}`; return out; }
   const porNombre = new Map();
   STATE.rosterMaestro.forEach(m=>{ const k = nombreClave(m.nombre); if (!porNombre.has(k)) porNombre.set(k, []); porNombre.get(k).push(m); });
@@ -1689,7 +1724,17 @@ function armarBorradorAsistencia(text){
     if (!m){ out.ilegibles++; return; }
     const ck = CAREER_KEYS[m.programa];
     if (!ck){ out.ilegibles++; return; }
-    out.registros.push({ email:m.email, ck, fecha, e, materia: iMa>=0 ? String(r[iMa]||'').trim() : '' });
+    out.registros.push({ email:m.email, ck, fecha, e, materia: iMa>=0 ? String(r[iMa]||'').trim() : '', clase: iCl>=0 ? (parseInt(r[iCl], 10) || 0) : 0 });
+  });
+  // a qué clase (fecha y, si hay dos el mismo día, su número) corresponde cada registro
+  const tmp = JSON.parse(JSON.stringify(ASIST.cfg));
+  CAREER_ORDER.forEach(p=>{ const k = CAREER_KEYS[p]; if (!Array.isArray(tmp[k])) tmp[k] = []; });
+  out.registros.forEach(r=>{
+    if (r.clase >= 1){
+      r.key = claveClase(r.fecha, r.clase);
+      let x = tmp[r.ck].find(s=>s.f===r.key); if (!x){ x = { f:r.key, m:'' }; tmp[r.ck].push(x); tmp[r.ck].sort(cmpSes); }
+      if (r.materia && !x.m) x.m = r.materia;
+    } else r.key = aplicarClase(tmp, r.ck, r.fecha, r.materia, true).key;
   });
   return out;
 }
@@ -1700,7 +1745,7 @@ function renderBorradorAsistencia(){
   if (d.error){ el.innerHTML = `<div class="diff-report">⚠️ ${escAttr(d.error)}</div>`; return; }
   const alumnas = new Set(d.registros.map(r=>r.email)).size;
   const fechas = d.registros.map(r=>r.fecha).sort();
-  const choques = d.registros.filter(r=>{ const a = (ASIST.marcas[r.email]||{})[r.fecha]; return a && a!==r.e; }).length;
+  const choques = d.registros.filter(r=>{ const a = (ASIST.marcas[r.email]||{})[r.key]; return a && a!==r.e; }).length;
   el.innerHTML = `<div class="diff-report">
     <b>Borrador:</b> ${d.registros.length} registros de ${alumnas} alumnas${fechas.length ? `, del ${fechas[0]} al ${fechas[fechas.length-1]}` : ''}.<br>
     ${choques ? `${choques} registro(s) cambiarán una marca que ya existe.<br>` : ''}
@@ -1723,15 +1768,17 @@ async function asistAplicarImport(){
   const d = ASIST_DRAFT; if (!d || !d.registros.length) return;
   const grupos = {};
   d.registros.forEach(r=>{
-    marcaMem(r.email, r.fecha, r.e);
-    (grupos[r.ck+'|'+r.fecha.slice(0,7)] = grupos[r.ck+'|'+r.fecha.slice(0,7)] || []).push(r);
+    marcaMem(r.email, r.key, r.e);
+    (grupos[r.ck+'|'+r.key.slice(0,7)] = grupos[r.ck+'|'+r.key.slice(0,7)] || []).push(r);
   });
-  // las fechas importadas se agregan a los días de clase de su carrera (y su materia, si el archivo la trae)
-  const regs = d.registros;
-  aplicarCfg(cfg=>regs.forEach(r=>agregarSesion(cfg, r.ck, r.fecha, r.materia)));
+  // las clases importadas se agregan a los días de clase de su carrera (y su materia, si el archivo la trae)
+  const entradas = {};
+  d.registros.forEach(r=>{ const k = r.ck+'|'+r.key; if (!entradas[k]) entradas[k] = { ck:r.ck, key:r.key, m:'' }; if (r.materia && !entradas[k].m) entradas[k].m = r.materia; });
+  const lista = Object.keys(entradas).map(k=>entradas[k]);
+  aplicarCfg(cfg=>lista.forEach(e=>{ let x = cfg[e.ck].find(s=>s.f===e.key); if (!x){ x = { f:e.key, m:'' }; cfg[e.ck].push(x); cfg[e.ck].sort(cmpSes); } if (e.m && !x.m) x.m = e.m; }));
   for (const k of Object.keys(grupos)){
     const [ck, mes] = k.split('|');
-    await guardarAsistencia(ck, mes, doc=>{ grupos[k].forEach(r=>{ (doc.marcas[r.fecha] = doc.marcas[r.fecha] || {})[r.email] = r.e; }); });
+    await guardarAsistencia(ck, mes, doc=>{ grupos[k].forEach(r=>{ (doc.marcas[r.key] = doc.marcas[r.key] || {})[r.email] = r.e; }); });
   }
   ASIST_MSG = `✓ Se importaron ${d.registros.length} registros`;
   ASIST_DRAFT = null; renderBorradorAsistencia();
@@ -1743,11 +1790,11 @@ function asistDescartarImport(){
   document.getElementById('eum-asist-file-name').textContent = '';
 }
 function csvDeAsistencia(){
-  const filas = [['Carrera','Alumna','Correo','Fecha','Estado','Materia']];
+  const filas = [['Carrera','Alumna','Correo','Fecha','Estado','Materia','Clase']];
   CAREER_ORDER.forEach(prog=>{
     maestroByCareer(prog).slice().sort((x,y)=>x.nombre.localeCompare(y.nombre)).forEach(m=>{
       const mm = ASIST.marcas[m.email] || {};
-      Object.keys(mm).sort().forEach(f=>filas.push([prog, m.nombre, m.email, f, ASIST_ESTADOS[mm[f]], materiaDeSesion(CAREER_KEYS[prog], f)]));
+      Object.keys(mm).sort().forEach(f=>filas.push([prog, m.nombre, m.email, fechaDe(f), ASIST_ESTADOS[mm[f]], materiaDeSesion(CAREER_KEYS[prog], f), numClase(f)]));
     });
   });
   return filas.map(f=>f.map(csvEscape).join(',')).join('\r\n');
@@ -1766,7 +1813,7 @@ function asistenciaHtml(a){
   const st = asistDe(a.email);
   if (!st) return `<div class="hist-section"><h4>Asistencia a clase presencial</h4><p style="color:var(--ink-soft); font-size:12.5px; margin:0;">Todavía no hay asistencia registrada para esta alumna.</p></div>`;
   const ult = st.tira.slice(-16);
-  const tira = ult.map(t=>`<div class="as-chip-wrap"><span class="as-chip ${t.e?t.e.toLowerCase():'vacio'}" title="${escAttr(fmtSesion(t.f)+' · '+(t.e?ASIST_ESTADOS[t.e]:'sin marcar'))}">${t.e||'·'}</span><small>${fmtDM(t.f)}</small></div>`).join('');
+  const tira = ult.map(t=>`<div class="as-chip-wrap"><span class="as-chip ${t.e?t.e.toLowerCase():'vacio'}" title="${escAttr(fmtSesion(t.f)+' · '+(t.e?ASIST_ESTADOS[t.e]:'sin marcar'))}">${t.e||'·'}</span><small>${fmtDM(t.f)}${numClase(t.f)>1 ? ' ·'+numClase(t.f)+'ª' : ''}</small></div>`).join('');
   const mats = Object.keys(st.porMateria);
   const porMateria = (mats.length && !(mats.length===1 && mats[0]==='Sin materia asignada')) ? `<table class="evo-table" style="margin-top:12px;"><thead><tr><th>Materia</th><th>Asist.</th><th>Ret.</th><th>Just.</th><th>Faltas</th><th>%</th></tr></thead><tbody>${mats.map(mt=>{ const x = st.porMateria[mt], b = x.A+x.R+x.F; return `<tr><td class="evo-n">${escAttr(mt)}</td><td class="mono">${x.A}</td><td class="mono">${x.R}</td><td class="mono">${x.J}</td><td class="mono">${x.F}</td><td class="mono">${b ? Math.round(100*(x.A+x.R)/b)+'%' : '—'}</td></tr>`; }).join('')}</tbody></table>` : '';
   const racha = st.baja ? '' : (st.racha>=ASIST_FALTAS_AMARILLO ? `<span><b class="venc">${st.racha} faltas seguidas</b></span>` : '');
@@ -1909,7 +1956,7 @@ function renderComoSeCalcula(){
     <p>Compara el último corte contra el anterior: suma los <b>puntos de avance ganados</b> en las materias que aparecen en ambos. Si suma más de cero se muestra "avanza (+N pts)"; si no, "sin avance" y se cuenta cuántos cortes seguidos lleva así. Si ya tiene todas sus materias al 100%, se marca como completa y no se considera estancada. El ritmo <b>no cambia el color</b>, solo agrega contexto al motivo.</p>
 
     <h4>Asistencia a clase presencial</h4>
-    <p>Se captura en la pestaña Asistencia, por día de clase de cada carrera (cada una tiene su propia lista de días y materias), con cinco estados: asistencia, retardo, justificado, falta y baja. Solo cuentan las sesiones con al menos una marca en su carrera: una sesión sin captura no es una falta, y una sesión marcada "sin clase" no cuenta para nadie.</p>
+    <p>Se captura en la pestaña Asistencia, por clase de cada carrera (cada una tiene su propia lista de días y materias, y un mismo día puede tener dos clases, cada una con su lista), con cinco estados: asistencia, retardo, justificado, falta y baja. Solo cuentan las sesiones con al menos una marca en su carrera: una sesión sin captura no es una falta, y una sesión marcada "sin clase" no cuenta para nadie.</p>
     <ul>
       <li><b>% de asistencia:</b> (asistencias + retardos) ÷ (asistencias + retardos + faltas). El justificado no suma ni resta.</li>
       <li><b>Faltas seguidas:</b> faltas consecutivas contando desde la sesión más reciente. Un justificado no corta la racha; una asistencia o un retardo sí.</li>
@@ -2272,7 +2319,7 @@ function cursoDeMateria(alumna, entrada){
   return mejor;
 }
 function ymd(y,m,d){ return new Date(Date.UTC(y,m-1,d)).toISOString().slice(0,10); }
-function ymdToUTC(str){ const [y,m,d] = String(str).split('-').map(Number); return Date.UTC(y,m-1,d); }
+function ymdToUTC(str){ const [y,m,d] = String(str).slice(0,10).split('-').map(Number); return Date.UTC(y,m-1,d); }
 function escAttr(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 // Nombres de materia vistos en los cortes cargados (los de Talisis), sin repetir por clave
@@ -2439,7 +2486,7 @@ const ESTADO_CLASE = { concluida:'ok', adelantada:'ok', al_corriente:'ok', liger
 const ESTADO_BADGE = { ok:'b-verde', warn:'b-amarillo', bad:'b-rojo', idle:'b-baja' };
 
 function fmtDM(str, conAnio){
-  const [y,m,d] = str.split('-').map(Number);
+  const [y,m,d] = String(str).slice(0,10).split('-').map(Number);
   return `${String(d).padStart(2,'0')} ${MES_CORTO[m-1]}${conAnio ? ' '+y : ''}`;
 }
 function fmtVentana(ini, fin, corte){
