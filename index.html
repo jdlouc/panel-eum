@@ -414,15 +414,19 @@
 #eum-app .as-btn.f.on { background:var(--as-f); border-color:var(--as-f); color:#fff; }
 #eum-app .as-btn.b.on { background:var(--as-b); border-color:var(--as-b); color:#fff; }
 #eum-app .as-wrap { overflow:auto; max-height:72vh; background:#fff; border:1px solid var(--line); border-radius:12px; }
-#eum-app table.as-matrix { border-collapse:separate; border-spacing:3px; font-size:12.5px; }
-#eum-app table.as-matrix th, #eum-app table.as-matrix td { padding:0; text-align:center; background:#fff; }
-#eum-app table.as-matrix thead th { position:sticky; top:0; z-index:2; padding:6px 2px; }
+#eum-app table.as-matrix { border-collapse:separate; border-spacing:0; table-layout:fixed; font-size:12.5px; }
+#eum-app table.as-matrix th, #eum-app table.as-matrix td { padding:1px; text-align:center; background:#fff; }
+#eum-app table.as-matrix thead th { position:sticky; top:0; z-index:2; padding:6px 1px 4px; vertical-align:bottom; }
 #eum-app table.as-matrix .as-sticky { position:sticky; left:0; z-index:1; text-align:left; padding:4px 10px 4px 8px; white-space:nowrap; font-weight:600; min-width:210px; background:#fff; }
 #eum-app table.as-matrix thead .as-sticky { z-index:3; }
 #eum-app table.as-matrix .as-fin { padding:0 8px; font-weight:600; }
-#eum-app .as-fecha { border:none; background:none; font: 600 11.5px 'IBM Plex Sans', system-ui, sans-serif; color:var(--ink-soft); cursor:pointer; padding:2px 4px; white-space:nowrap; }
+#eum-app .as-fecha { border:none; background:none; font: 600 10.5px 'IBM Plex Sans', system-ui, sans-serif; color:var(--ink-soft); cursor:pointer; padding:2px 0; width:100%; display:flex; flex-direction:column; align-items:center; line-height:1.15; }
+#eum-app .as-fecha .d { font-size:13px; font-weight:700; color:var(--ink); }
+#eum-app .as-fecha .y { font-size:9.5px; font-weight:500; }
+#eum-app .as-vmat { writing-mode:vertical-rl; transform:rotate(180deg); height:132px; width:100%; margin:0 auto 4px; overflow:hidden; font-size:10px; line-height:1.15; font-weight:600; color:var(--brand); text-align:start; }
+#eum-app table.as-matrix .as-corte { box-shadow: inset 2px 0 0 var(--line); }
 #eum-app .as-fecha:hover { color:var(--ink); text-decoration:underline; }
-#eum-app .as-cell { width:32px; height:30px; border:none; border-radius:6px; font: 700 12px 'IBM Plex Sans', system-ui, sans-serif; cursor:pointer; color:#fff; }
+#eum-app .as-cell { width:100%; height:30px; border:none; border-radius:5px; font: 700 12px 'IBM Plex Sans', system-ui, sans-serif; cursor:pointer; color:#fff; }
 #eum-app .as-cell.a { background:var(--as-a); }
 #eum-app .as-cell.r { background:var(--as-r); color:var(--as-r-text); }
 #eum-app .as-cell.j { background:var(--as-j); }
@@ -452,7 +456,6 @@
 #eum-app table.as-dias tr.as-futura td { color:var(--ink-soft); }
 #eum-app table.as-dias tr.as-proxima td { box-shadow: inset 0 2px 0 var(--brand); }
 #eum-app table.as-dias tr.as-nueva td { background: var(--accent-green-soft); }
-#eum-app th.as-grupo { font: 600 11px 'IBM Plex Sans', system-ui, sans-serif; color:var(--brand); background:var(--brand-soft); border-radius:6px; padding:3px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:220px; }
 #eum-app .rs-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 28px; align-items:start; }
 #eum-app .rs-stack { display:flex; height:16px; border-radius:8px; overflow:hidden; background:var(--paper); margin-bottom:10px; }
 #eum-app .rs-stack span { display:block; height:100%; }
@@ -889,7 +892,7 @@
   </div>
 
   <div id="eum-modal-root"></div>
-  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.8 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
+  <div style="margin-top:18px; text-align:center; font-size:11px; color:var(--ink-soft);">Versión 14-oct-2026 · seguimiento v3.9 · asistencia (si no ves esta línea, recarga con Cmd+Shift+R)</div>
   </div>
 </div>
 
@@ -1464,22 +1467,24 @@ function asistHistorialHtml(prog, ck){
   if (!ses.length) return '<div class="empty-state">Todavía no hay asistencia capturada para esta carrera. Pasa lista en la vista "Pasar lista" o importa el historial.</div>';
   const alumnas = maestroByCareer(prog).filter(m=>m.estatus==='activa' || ASIST.stats.get(m.email)).sort((x,y)=>x.nombre.localeCompare(y.nombre));
   const anio = ses[ses.length-1].slice(0,4);
-  const grupos = [];
-  ses.forEach(f=>{ const mt = materiaDeSesion(ck, f); const g = grupos[grupos.length-1]; if (g && g.m===mt) g.n++; else grupos.push({ m:mt, n:1 }); });
-  const filaMaterias = grupos.some(g=>g.m) ? `<tr><th class="as-sticky" style="top:0;"></th><th class="as-fin"></th><th class="as-fin"></th>${grupos.map(g=>`<th colspan="${g.n}" class="as-grupo" title="${escAttr(g.m||'Sin materia asignada')}">${escAttr(g.m||'—')}</th>`).join('')}</tr>` : '';
-  const cab = ses.map(f=>`<th title="${fmtSesion(f)} ${f.slice(0,4)}${rotuloClase(f)}"><button class="as-fecha" onclick="EUM.asistIr('${f}'); EUM.asistVista('lista')">${fmtDM(f, f.slice(0,4)!==anio)}${numClase(f)>1 ? ` ·${numClase(f)}ª` : ''}</button></th>`).join('');
+  // una columna por clase, todas del mismo ancho y pegadas; la materia va en vertical sobre cada fecha
+  const corte = ses.map((f,i)=>i>0 && materiaDeSesion(ck, f)!==materiaDeSesion(ck, ses[i-1]));
+  const cab = ses.map((f,i)=>{
+    const mt = materiaDeSesion(ck, f), dm = fmtDM(f, false).split(' ');
+    return `<th class="as-col${corte[i]?' as-corte':''}" title="${escAttr(`${fmtSesion(f)} ${f.slice(0,4)}${rotuloClase(f)}${mt ? ' · '+mt : ''}`)}"><div class="as-vmat">${escAttr(mt)}</div><button class="as-fecha" onclick="EUM.asistIr('${f}'); EUM.asistVista('lista')"><span class="d">${dm[0]}</span><span class="m">${dm[1]}</span>${f.slice(0,4)!==anio ? `<span class="y">${f.slice(0,4)}</span>` : ''}${numClase(f)>1 ? `<span class="y">${numClase(f)}ª</span>` : ''}</button></th>`;
+  }).join('');
   const filas = alumnas.map(m=>{
     const mm = ASIST.marcas[m.email] || {}, st = ASIST.stats.get(m.email);
-    const celdas = ses.map(f=>{
-      const e = mm[f];
-      return `<td>${e ? `<button class="as-cell ${e.toLowerCase()}" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${fmtSesion(f)}${rotuloClase(f)} · ${ASIST_ESTADOS[e]}">${e}</button>` : `<button class="as-cell vacio" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${fmtSesion(f)}${rotuloClase(f)} · sin marcar">·</button>`}</td>`;
+    const celdas = ses.map((f,i)=>{
+      const e = mm[f], cls = e ? e.toLowerCase() : 'vacio';
+      return `<td class="${corte[i]?'as-corte':''}"><button class="as-cell ${cls}" data-e="${escAttr(m.email)}" data-f="${f}" onclick="EUM.asistCiclar(this.dataset.e,this.dataset.f)" title="${escAttr(fmtSesion(f)+rotuloClase(f)+' · '+(e ? ASIST_ESTADOS[e] : 'sin marcar'))}">${e || '·'}</button></td>`;
     }).join('');
     const pct = st ? (st.baja ? 'Baja' : (st.pct==null ? '—' : st.pct+'%')) : '—';
     const racha = st && !st.baja && st.racha>=ASIST_FALTAS_AMARILLO ? `<span class="venc">${st.racha}</span>` : (st && !st.baja ? '0' : '—');
     return `<tr><th class="as-sticky" scope="row">${escAttr(m.nombre)}</th><td class="mono as-fin">${pct}</td><td class="mono as-fin">${racha}</td>${celdas}</tr>`;
   }).join('');
-  return `<p class="rc-meta" style="margin:0 0 8px;">Haz clic en una celda para cambiar su estado (asistencia → retardo → justificado → falta → baja → vacío). Haz clic en una fecha para abrir esa sesión.</p>
-    <div class="as-wrap"><table class="as-matrix"><thead>${filaMaterias}<tr><th class="as-sticky">Alumna</th><th class="as-fin">%</th><th class="as-fin" title="Faltas seguidas">F seg.</th>${cab}</tr></thead><tbody>${filas}</tbody></table></div>`;
+  return `<p class="rc-meta" style="margin:0 0 8px;">Haz clic en una celda para cambiar su estado (asistencia → retardo → justificado → falta → baja → vacío). Haz clic en una fecha para abrir esa clase. Sobre cada fecha va la materia de esa clase.</p>
+    <div class="as-wrap"><table class="as-matrix" style="width:${210+2*56+ses.length*38}px"><colgroup><col style="width:210px"><col style="width:56px"><col style="width:56px">${ses.map(()=>'<col style="width:38px">').join('')}</colgroup><thead><tr><th class="as-sticky">Alumna</th><th class="as-fin">%</th><th class="as-fin" title="Faltas seguidas">F seg.</th>${cab}</tr></thead><tbody>${filas}</tbody></table></div>`;
 }
 
 // ---- resumen estadístico ----
